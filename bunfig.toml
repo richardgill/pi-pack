@@ -1,3 +1,2 @@
 [test]
-preload = ["./src/testing/setup.ts", "./src/testing/matchers.ts"]
 concurrentTestGlob = "**/*.{unit,integration,e2e}.test.ts"

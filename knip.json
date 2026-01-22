@@ -1,13 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": [
-    "src/testing/matchers.ts",
-    "src/testing/setup.ts",
-    "src/testing/fs-test-utils.ts",
-    "src/testing/e2e-utils.ts",
-    "src/**/*.{unit,e2e}.test.ts",
-    "scripts/*.ts"
-  ],
+  "entry": ["src/**/*.{unit,e2e}.test.ts", "scripts/*.ts"],
   "project": ["src/**/*.ts", "scripts/**/*.ts"],
   "lefthook": false,
   "ignoreBinaries": ["tar", "sha256sum"],
