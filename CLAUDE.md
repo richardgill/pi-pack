@@ -1,6 +1,6 @@
 @BEADS.md
 
-# Patchy CLI Project
+# pi-pack CLI Project
 
 ## Project Overview
 

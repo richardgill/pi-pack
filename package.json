@@ -1,6 +1,6 @@
 {
   "name": "patchy-cli",
-  "version": "0.0.27",
+  "version": "0.0.1",
   "description": "A CLI tool for managing Git patch workflows.",
   "type": "module",
   "bin": {
