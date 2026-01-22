@@ -1,5 +1,3 @@
-@BEADS.md
-
 # pi-pack CLI Project
 
 ## Project Overview

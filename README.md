@@ -69,8 +69,6 @@ Single repo extension example
 Mono repo extension example
 
 
-
-
 ## License
 
 MIT
