@@ -2,7 +2,7 @@
   "$schema": "https://unpkg.com/@changesets/config@3.0.3/schema.json",
   "changelog": [
     "@changesets/changelog-github",
-    { "repo": "richardgill/patchy" }
+    { "repo": "richardgill/pi-pack" }
   ],
   "commit": false,
   "fixed": [],

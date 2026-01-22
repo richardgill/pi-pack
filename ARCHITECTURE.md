@@ -1,11 +1,15 @@
 # Architecture
 
-This is a modern CLI 'template' designed to be used with AI agents.
+This is a modern CLI template designed to be used with AI agents.
+
+## Project
+
+pi-pack is a packaging system for [pi](https://github.com/badlogic/pi-mono) extensions inspired by nvim packages.
 
 ## Tech stack
 
 - Bun
-- Strcli
+- Stricli
 - Clack
 - AI agent optimized
   - `bun run local-ci` runs:
@@ -13,17 +17,17 @@ This is a modern CLI 'template' designed to be used with AI agents.
     - tsc
     - Knip (dead code analysis)
     - tests
-- Extensive end-to-end testing using `runCli('patchy apply')` in tests
+- Extensive end-to-end testing using `runCli('pi-pack install …')` in tests
   - Tests run fast in-process
 - Changesets with automated release PRs
 
 ## Binaries / Runtime
 
 Distributed as:
-  - Bun binaries: e.g. `patchy-linux-x64`.
-    - Install: `curl -fsSL https://raw.githubusercontent.com/richardgill/patchy/main/install | bash`
-  - npm package which immediately executes bun binary
-    - `npx patchy-cli`
+- Bun binaries: e.g. `pi-pack-linux-x64`.
+  - Install: `curl -fsSL https://raw.githubusercontent.com/richardgill/pi-pack/main/install | bash`
+- npm package which immediately executes bun binary
+  - `npx pi-pack`
 
 ## One time setup
 
@@ -47,10 +51,15 @@ Or manually: Settings → General → Pull Requests → Enable "Squash merging" 
 ```sh
 gh api repos/OWNER/REPO/actions/permissions/workflow -X PUT \
   -f default_workflow_permissions=read \
-  -F can_approve_pull_request_reviews=true
+  -f can_approve_pull_request_reviews=true
 ```
 
-Or via GitHub UI: Settings → Actions → General → "Allow GitHub Actions to create and approve pull requests"
+Open settings page:
+```sh
+open "$(gh repo view --json url -q .url)/settings/actions"
+```
+
+Then in the GitHub UI: Settings → Actions → General → set "Read repository contents permission" and enable "Allow GitHub Actions to create and approve pull requests".
 
 ### GitHub Action Secrets
 
@@ -58,15 +67,14 @@ The release workflow requires these GitHub repository secrets:
 - `GITHUB_TOKEN`: Automatically provided by GitHub Actions
 - `NPM_TOKEN`: Required for publishing to npm. To set this up:
   1. Go to https://www.npmjs.com/settings/YOUR_USERNAME/tokens
-  2. Click "Generate New Token" → "Classic Token"
-  3. Select "Automation" type (for CI/CD)
+  2. Click "Generate New Token" 
+  3. Permission type read and write for 1 package only (you need to publish first)
   4. Copy the token
   5. Set the secret: `gh secret set NPM_TOKEN` (paste token when prompted)
 
-
 ## Release Process
 
-Patchy uses [Changesets](https://github.com/changesets/changesets) for versioning and publishing. The release process is largely automated via GitHub Actions.
+pi-pack uses [Changesets](https://github.com/changesets/changesets) for versioning and publishing. The release process is largely automated via GitHub Actions.
 
 ### Adding a Changeset
 
@@ -99,14 +107,13 @@ When changes with changesets are merged to `main`:
 2. **Merge the Release PR**: When you're ready to release, merge the release PR. This triggers:
 
 3. **Binary Builds**: Native binaries are built for all platforms:
-   - `patchy-linux-x64`
-   - `patchy-linux-arm64`
-   - `patchy-darwin-x64`
-   - `patchy-darwin-arm64`
-   - `patchy-windows-x64`
+   - `pi-pack-linux-x64`
+   - `pi-pack-linux-arm64`
+   - `pi-pack-darwin-x64`
+   - `pi-pack-darwin-arm64`
+   - `pi-pack-windows-x64`
 
 4. **GitHub Release**: A GitHub release is created with:
    - Platform-specific archives (`.tar.gz` for Linux, `.zip` for macOS/Windows)
    - SHA256 checksums
    - Installation instructions
-

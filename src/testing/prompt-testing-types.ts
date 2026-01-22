@@ -1,5 +1,3 @@
-import type { CLIResult } from "./testing-types";
-
 export const acceptDefault = Symbol("acceptDefault");
 export const cancel = Symbol("cancel");
 
@@ -37,8 +35,3 @@ export type RecordedPrompt = PromptInfo & {
 export type PromptHandler = (
   prompt: PromptInfo,
 ) => PromptResponse | Promise<PromptResponse>;
-
-export type PromptedCliResult = {
-  result: CLIResult;
-  prompts: RecordedPrompt[];
-};

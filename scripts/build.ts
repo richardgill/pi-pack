@@ -5,11 +5,12 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { $ } from "bun";
-import { PATCHY_VERSION_ENV_VAR } from "../src/constants";
+import { PI_PACK_VERSION_ENV_VAR } from "../src/constants";
 import { getVersion } from "../src/version";
-import { generateJsonSchema, SCHEMA_FILENAME } from "./generate-schema";
 
-const CLI_NAME = "patchy";
+// import { generateJsonSchema, SCHEMA_FILENAME } from "./generate-schema";
+
+const CLI_NAME = "pi-pack";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,9 +45,10 @@ const mainPkg = await Bun.file("package.json").json();
 await $`rm -rf dist`;
 await $`mkdir -p dist`;
 
-const jsonSchema = generateJsonSchema();
-await Bun.write(SCHEMA_FILENAME, `${JSON.stringify(jsonSchema, null, 2)}\n`);
-console.log(`Generated JSON Schema: ${SCHEMA_FILENAME}`);
+// TODO: Re-enable JSON schema generation when cli-fields module is restored
+// const jsonSchema = generateJsonSchema();
+// await Bun.write(SCHEMA_FILENAME, `${JSON.stringify(jsonSchema, null, 2)}\n`);
+// console.log(`Generated JSON Schema: ${SCHEMA_FILENAME}`);
 
 const binaries: Record<string, string> = {};
 
@@ -75,7 +77,7 @@ for (const item of targets) {
       outfile: `dist/${name}/bin/${binaryName}`,
     },
     define: {
-      [`process.env.${PATCHY_VERSION_ENV_VAR}`]: JSON.stringify(version),
+      [`process.env.${PI_PACK_VERSION_ENV_VAR}`]: JSON.stringify(version),
     },
   });
 

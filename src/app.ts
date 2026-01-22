@@ -1,30 +1,26 @@
 import { buildApplication, buildRouteMap } from "@stricli/core";
-import { applyCommand } from "./commands/apply/command";
-import { baseCommand } from "./commands/base/command";
-import { configRoutes } from "./commands/config/routes";
-import { generateCommand } from "./commands/generate/command";
-import { initCommand } from "./commands/init/command";
-import { primeCommand } from "./commands/prime/command";
-import { repoRoutes } from "./commands/repo/routes";
+import { installCommand } from "./commands/install/command";
+import { rootCommand } from "./commands/root/command";
+import { updateCommand } from "./commands/update/command";
 import { VERSION } from "./version";
 
 const routes = buildRouteMap({
   routes: {
-    init: initCommand,
-    apply: applyCommand,
-    generate: generateCommand,
-    prime: primeCommand,
-    base: baseCommand,
-    config: configRoutes,
-    repo: repoRoutes,
+    install: installCommand,
+    update: updateCommand,
+    root: rootCommand,
   },
+  defaultCommand: "root",
   docs: {
-    brief: "A CLI tool for managing Git patch workflows",
+    brief: "A packaging system for pi extensions",
+    hideRoute: {
+      root: true,
+    },
   },
 });
 
 export const app = buildApplication(routes, {
-  name: "patchy",
+  name: "pi-pack",
   versionInfo: {
     currentVersion: VERSION,
   },

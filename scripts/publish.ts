@@ -78,22 +78,22 @@ const prepareReleaseAssets = async () => {
 
   await $`mkdir -p release`;
 
-  await $`cp dist/patchy-linux-x64/bin/patchy release/patchy-linux-x64`;
-  await $`cp dist/patchy-linux-arm64/bin/patchy release/patchy-linux-arm64`;
-  await $`cp dist/patchy-darwin-x64/bin/patchy release/patchy-darwin-x64`;
-  await $`cp dist/patchy-darwin-arm64/bin/patchy release/patchy-darwin-arm64`;
-  await $`cp dist/patchy-windows-x64/bin/patchy.exe release/patchy-windows-x64.exe`;
+  await $`cp dist/pi-pack-linux-x64/bin/pi-pack release/pi-pack-linux-x64`;
+  await $`cp dist/pi-pack-linux-arm64/bin/pi-pack release/pi-pack-linux-arm64`;
+  await $`cp dist/pi-pack-darwin-x64/bin/pi-pack release/pi-pack-darwin-x64`;
+  await $`cp dist/pi-pack-darwin-arm64/bin/pi-pack release/pi-pack-darwin-arm64`;
+  await $`cp dist/pi-pack-windows-x64/bin/pi-pack.exe release/pi-pack-windows-x64.exe`;
 
   const originalCwd = process.cwd();
   process.chdir("release");
 
-  await $`tar -czf patchy-linux-x64.tar.gz patchy-linux-x64`;
-  await $`tar -czf patchy-linux-arm64.tar.gz patchy-linux-arm64`;
-  await $`zip patchy-darwin-x64.zip patchy-darwin-x64`;
-  await $`zip patchy-darwin-arm64.zip patchy-darwin-arm64`;
-  await $`zip patchy-windows-x64.zip patchy-windows-x64.exe`;
+  await $`tar -czf pi-pack-linux-x64.tar.gz pi-pack-linux-x64`;
+  await $`tar -czf pi-pack-linux-arm64.tar.gz pi-pack-linux-arm64`;
+  await $`zip pi-pack-darwin-x64.zip pi-pack-darwin-x64`;
+  await $`zip pi-pack-darwin-arm64.zip pi-pack-darwin-arm64`;
+  await $`zip pi-pack-windows-x64.zip pi-pack-windows-x64.exe`;
   await $`sha256sum *.tar.gz *.zip > checksums.txt`;
-  await $`rm -f patchy-linux-x64 patchy-linux-arm64 patchy-darwin-x64 patchy-darwin-arm64 patchy-windows-x64.exe`;
+  await $`rm -f pi-pack-linux-x64 pi-pack-linux-arm64 pi-pack-darwin-x64 pi-pack-darwin-arm64 pi-pack-windows-x64.exe`;
 
   process.chdir(originalCwd);
 
@@ -106,8 +106,8 @@ const publishPlatformPackages = async (config: Config) => {
   const originalCwd = process.cwd();
 
   for (const platform of PLATFORM_PACKAGES) {
-    const distDir = `dist/patchy-${platform}`;
-    const npmName = `patchy-cli-${platform}`;
+    const distDir = `dist/pi-pack-${platform}`;
+    const npmName = `pi-pack-${platform}`;
     const pkgPath = `${distDir}/package.json`;
 
     if (await isVersionPublished(npmName, config.version)) {
@@ -145,7 +145,7 @@ const publishMainPackage = async (config: Config) => {
 
   pkg.version = config.version;
   pkg.optionalDependencies = Object.fromEntries(
-    PLATFORM_PACKAGES.map((p) => [`patchy-cli-${p}`, config.version]),
+    PLATFORM_PACKAGES.map((p) => [`pi-pack-${p}`, config.version]),
   );
   await Bun.write("package.json", `${JSON.stringify(pkg, null, 2)}\n`);
 

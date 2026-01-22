@@ -1,12 +1,12 @@
-# Contributing to Patchy
+# Contributing to pi-pack
 See [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ## Development Setup
 
 1. Clone the repository:
    ```sh
-   git clone https://github.com/richardgill/patchy.git
-   cd patchy
+   git clone https://github.com/richardgill/pi-pack.git
+   cd pi-pack
    ```
 
 2. Install dependencies:
@@ -21,18 +21,18 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md)
 
    **Tip:** You can run the dev CLI from any directory using `--cwd`:
    ```sh
-   bun run --cwd /path/to/patchy dev init
+   bun run --cwd /path/to/pi-pack dev install "npm:@foo/bar@1.0.0"
    ```
 
-   **Tip:** Add a shell alias for quick access (run this from the patchy directory):
+   **Tip:** Add a shell alias for quick access (run this from the pi-pack directory):
    ```sh
-   alias patchydev="PATCHY_CWD=\"\$PWD\" bun run --cwd $(pwd) dev"
+   alias pi-packdev="PI_PACK_CWD=\"\$PWD\" bun run --cwd $(pwd) dev"
    ```
-   This bakes in the patchy path at definition time, while `$PWD` expands to your working directory at execution time.
+   This bakes in the pi-pack path at definition time, while `$PWD` expands to your working directory at execution time.
 
-   Or generate the alias with your current path (run from the patchy directory):
+   Or generate the alias with your current path (run from the pi-pack directory):
    ```sh
-   echo 'alias patchydev='"'"'PATCHY_CWD="$PWD" bun run --cwd '"$(pwd)"' dev'"'"
+   echo 'alias pi-packdev='"'"'PI_PACK_CWD="$PWD" bun run --cwd '"$(pwd)"' dev'"'"''
    ```
 
 ## Development Commands

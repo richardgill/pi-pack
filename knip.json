@@ -1,7 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "entry": [
-    "src/cli.ts",
     "src/testing/matchers.ts",
     "src/testing/setup.ts",
     "src/testing/fs-test-utils.ts",
@@ -11,5 +10,16 @@
   ],
   "project": ["src/**/*.ts", "scripts/**/*.ts"],
   "lefthook": false,
-  "ignoreBinaries": ["tar", "sha256sum"]
+  "ignoreBinaries": ["tar", "sha256sum"],
+  "ignoreDependencies": ["@clack/prompts", "es-toolkit"],
+  "ignore": [
+    "src/lib/env.ts",
+    "src/lib/exit.ts",
+    "src/lib/prompts.ts",
+    "src/testing/prompt-testing-types.ts",
+    "src/version.ts"
+  ],
+  "ignoreExportsUsedInFile": {
+    "type": true
+  }
 }

@@ -48,7 +48,7 @@ jobs:
       - name: Build all binaries
         run: bun run build
         env:
-          PATCHY_VERSION: ${{ steps.version.outputs.version }}
+          PI_PACK_VERSION: ${{ steps.version.outputs.version }}
 
       - name: Setup npm auth
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
@@ -75,11 +75,11 @@ jobs:
             This is an automated pre-release for testing. It will be deleted when the PR is merged or closed.
           prerelease: true
           files: |
-            release/patchy-linux-x64.tar.gz
-            release/patchy-linux-arm64.tar.gz
-            release/patchy-darwin-x64.zip
-            release/patchy-darwin-arm64.zip
-            release/patchy-windows-x64.zip
+            release/pi-pack-linux-x64.tar.gz
+            release/pi-pack-linux-arm64.tar.gz
+            release/pi-pack-darwin-x64.zip
+            release/pi-pack-darwin-arm64.zip
+            release/pi-pack-windows-x64.zip
             release/checksums.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -99,44 +99,44 @@ jobs:
             ### Quick Install
 
             ```bash
-            curl -fsSL https://raw.githubusercontent.com/richardgill/patchy/main/install | bash -s -- --pr ${{ steps.version.outputs.pr_number }}
+            curl -fsSL https://raw.githubusercontent.com/richardgill/pi-pack/main/install | bash -s -- --pr ${{ steps.version.outputs.pr_number }}
             ```
 
             ### Install via npm
 
             ```bash
-            npm install -g patchy-cli@pr-${{ steps.version.outputs.pr_number }}
+            npm install -g pi-pack@pr-${{ steps.version.outputs.pr_number }}
             ```
 
             Or use directly:
 
             ```bash
-            npx patchy-cli@pr-${{ steps.version.outputs.pr_number }} --version
+            npx pi-pack@pr-${{ steps.version.outputs.pr_number }} --version
             ```
 
             ### Direct Downloads
 
             | Platform | Architecture | Download |
             |----------|--------------|----------|
-            | Linux | x64 | [patchy-linux-x64.tar.gz](https://github.com/richardgill/patchy/releases/download/${{ steps.version.outputs.tag }}/patchy-linux-x64.tar.gz) |
-            | Linux | arm64 | [patchy-linux-arm64.tar.gz](https://github.com/richardgill/patchy/releases/download/${{ steps.version.outputs.tag }}/patchy-linux-arm64.tar.gz) |
-            | macOS | Intel | [patchy-darwin-x64.zip](https://github.com/richardgill/patchy/releases/download/${{ steps.version.outputs.tag }}/patchy-darwin-x64.zip) |
-            | macOS | Apple Silicon | [patchy-darwin-arm64.zip](https://github.com/richardgill/patchy/releases/download/${{ steps.version.outputs.tag }}/patchy-darwin-arm64.zip) |
-            | Windows | x64 | [patchy-windows-x64.zip](https://github.com/richardgill/patchy/releases/download/${{ steps.version.outputs.tag }}/patchy-windows-x64.zip) |
+            | Linux | x64 | [pi-pack-linux-x64.tar.gz](https://github.com/richardgill/pi-pack/releases/download/${{ steps.version.outputs.tag }}/pi-pack-linux-x64.tar.gz) |
+            | Linux | arm64 | [pi-pack-linux-arm64.tar.gz](https://github.com/richardgill/pi-pack/releases/download/${{ steps.version.outputs.tag }}/pi-pack-linux-arm64.tar.gz) |
+            | macOS | Intel | [pi-pack-darwin-x64.zip](https://github.com/richardgill/pi-pack/releases/download/${{ steps.version.outputs.tag }}/pi-pack-darwin-x64.zip) |
+            | macOS | Apple Silicon | [pi-pack-darwin-arm64.zip](https://github.com/richardgill/pi-pack/releases/download/${{ steps.version.outputs.tag }}/pi-pack-darwin-arm64.zip) |
+            | Windows | x64 | [pi-pack-windows-x64.zip](https://github.com/richardgill/pi-pack/releases/download/${{ steps.version.outputs.tag }}/pi-pack-windows-x64.zip) |
 
             <details>
             <summary>Manual installation</summary>
 
             ```bash
             # Download (replace PLATFORM with: linux-x64, linux-arm64, darwin-x64, darwin-arm64, or windows-x64)
-            curl -fsSL https://github.com/richardgill/patchy/releases/download/${{ steps.version.outputs.tag }}/patchy-PLATFORM.tar.gz | tar -xz
+            curl -fsSL https://github.com/richardgill/pi-pack/releases/download/${{ steps.version.outputs.tag }}/pi-pack-PLATFORM.tar.gz | tar -xz
 
             # Make executable and run
-            chmod +x patchy-*
-            ./patchy-* --version
+            chmod +x pi-pack-*
+            ./pi-pack-* --version
             ```
 
             </details>
 
             ---
-            <sub>🤖 This comment updates automatically with each push. [View release](https://github.com/richardgill/patchy/releases/tag/${{ steps.version.outputs.tag }})</sub>
+            <sub>🤖 This comment updates automatically with each push. [View release](https://github.com/richardgill/pi-pack/releases/tag/${{ steps.version.outputs.tag }})</sub>

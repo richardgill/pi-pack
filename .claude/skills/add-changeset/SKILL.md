@@ -26,7 +26,7 @@ File: `.changeset/add-export-feature.md`
 
 ```markdown
 ---
-"patchy-cli": patch
+"pi-pack": patch
 ---
 
 Add CSV export functionality for usage metrics

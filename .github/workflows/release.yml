@@ -85,7 +85,7 @@ jobs:
       - name: Build all binaries
         run: bun run build
         env:
-          PATCHY_VERSION: ${{ needs.create-release-pr.outputs.version }}
+          PI_PACK_VERSION: ${{ needs.create-release-pr.outputs.version }}
 
       - name: Setup npm auth
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
@@ -97,43 +97,43 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.create-release-pr.outputs.version }}
-          name: patchy v${{ needs.create-release-pr.outputs.version }}
+          name: pi-pack v${{ needs.create-release-pr.outputs.version }}
           body: |
-            ## patchy v${{ needs.create-release-pr.outputs.version }}
+            ## pi-pack v${{ needs.create-release-pr.outputs.version }}
 
-            See [CHANGELOG](https://github.com/richardgill/patchy/blob/main/CHANGELOG.md) for details.
+            See [CHANGELOG](https://github.com/richardgill/pi-pack/blob/main/CHANGELOG.md) for details.
 
             ### Installation
 
             **Install script (recommended):**
             ```bash
-            curl -fsSL https://raw.githubusercontent.com/richardgill/patchy/main/install | bash
+            curl -fsSL https://raw.githubusercontent.com/richardgill/pi-pack/main/install | bash
             ```
 
             **Via npm:**
             ```bash
-            npm install -g patchy-cli
+            npm install -g pi-pack
             ```
 
             Or use directly:
             ```bash
-            npx patchy-cli --version
+            npx pi-pack --version
             ```
 
             **Manual download:**
             | Platform | Architecture | Download |
             |----------|--------------|----------|
-            | Linux | x64 | `patchy-linux-x64.tar.gz` |
-            | Linux | arm64 | `patchy-linux-arm64.tar.gz` |
-            | macOS | Intel | `patchy-darwin-x64.zip` |
-            | macOS | Apple Silicon | `patchy-darwin-arm64.zip` |
-            | Windows | x64 | `patchy-windows-x64.zip` |
+            | Linux | x64 | `pi-pack-linux-x64.tar.gz` |
+            | Linux | arm64 | `pi-pack-linux-arm64.tar.gz` |
+            | macOS | Intel | `pi-pack-darwin-x64.zip` |
+            | macOS | Apple Silicon | `pi-pack-darwin-arm64.zip` |
+            | Windows | x64 | `pi-pack-windows-x64.zip` |
           files: |
-            release/patchy-linux-x64.tar.gz
-            release/patchy-linux-arm64.tar.gz
-            release/patchy-darwin-x64.zip
-            release/patchy-darwin-arm64.zip
-            release/patchy-windows-x64.zip
+            release/pi-pack-linux-x64.tar.gz
+            release/pi-pack-linux-arm64.tar.gz
+            release/pi-pack-darwin-x64.zip
+            release/pi-pack-darwin-arm64.zip
+            release/pi-pack-windows-x64.zip
             release/checksums.txt
           draft: false
           prerelease: ${{ contains(needs.create-release-pr.outputs.version, '-') }}

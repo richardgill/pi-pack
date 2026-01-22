@@ -2,8 +2,8 @@
 # Inspired by opencode: https://github.com/sst/opencode/blob/main/install
 set -euo pipefail
 
-APP=patchy
-REPO="richardgill/patchy"
+APP=pi-pack
+REPO="richardgill/pi-pack"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -110,7 +110,7 @@ else
 fi
 
 # Set install directory
-INSTALL_DIR=$HOME/.patchy/bin
+INSTALL_DIR=$HOME/.pi-pack/bin
 mkdir -p "$INSTALL_DIR"
 
 # Determine download URL
@@ -150,7 +150,7 @@ download_and_install() {
       error "Failed to extract $filename"
   fi
 
-  # Binary may be named with platform suffix (e.g., patchy-linux-x64) or just patchy
+  # Binary may be named with platform suffix (e.g., pi-pack-linux-x64) or just pi-pack
   local binary_name=""
   if [ -f "$APP-$target" ]; then
     binary_name="$APP-$target"
@@ -182,7 +182,7 @@ add_to_path() {
   if grep -Fxq "$command" "$config_file" 2>/dev/null; then
     print_message info "${MUTED}PATH already configured in $config_file${NC}"
   elif [[ -w $config_file ]]; then
-    echo -e "\n# patchy" >> "$config_file"
+    echo -e "\n# pi-pack" >> "$config_file"
     echo "$command" >> "$config_file"
     print_message info "${MUTED}Added ${NC}$APP ${MUTED}to \$PATH in ${NC}$config_file"
   else
@@ -244,7 +244,7 @@ if [ -n "$requested_pr" ]; then
 fi
 echo -e "${MUTED}To get started:${NC}"
 echo ""
-echo -e "  ${GREEN}patchy --help${NC}"
+echo -e "  ${GREEN}pi-pack --help${NC}"
 echo ""
 if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
   echo -e "${MUTED}Note: You may need to restart your shell or run:${NC}"
