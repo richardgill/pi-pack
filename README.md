@@ -12,17 +12,9 @@
 
 A packaging system for [pi](https://github.com/badlogic/pi-mono) extensions inspired by nvim packages.
 
+pi-pack extensions are configured using typescript to set options.
+
 ## Getting started 
-
-### Installation
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/richardgill/pi-pack/main/install | bash
-# follow instructions
-pi-pack
-```
-
-Or via npm:
 
 
 ```sh
@@ -36,7 +28,7 @@ Or use directly without installing:
 npx pi-pack@latest
 ```
 
-### Commands
+### Installing pi-pack compatible extensions
 
 ```bash
 pi-pack install "npm:@foo/bar@1.0.0"
@@ -50,23 +42,62 @@ pi-pack update "extension-name"
 (cd ~/.pi/extensions/extension-name && pi-pack update)
 ```
 
+### How pi-pack extensions work
+
+```bash
+pi-pack install "git:github.com/richardgill/pi-pack-example"
+```
+
+Installs the extension to: 
+```
+~/.pi/agent/extensions/pi-pack-example/
+├── index.ts
+└── package.json
+```
+
+```ts
+// index.ts
+
+import { piPackExample } from 'pi-pack-example'
+
+export default piPackExample({
+  option: 'default-option'
+})
+```
+
+```json5
+// package.json
+{
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "pi-pack-example": "github:richardgill/pi-pack-example"
+  }
+}
+```
+
+Extensions are installed via `pnpm`. 
+
 ### Building an extension
 
-pi-pack extensions are simple npm packages with a default config which will be placed `~/.pi/extensions/<yourext>/index.ts`
+pi-pack extensions are simple npm packages:
+
+- They export a function users will call to configure the extension 
+- They provide a default config that will be copied into: `~/.pi/agent/extension/<extension-name>/index.ts` 
+
+#### Single repo extension example
+
+#### Mono repo extension example
 
 #### Default config
 
 By default pi-pack will look for the default config in `./src/default-config.ts`. 
 
-You can override this location in your package's `package.json`:
+You also can override this location in your package's `package.json`:
 
 ```json
 "pi-pack": { "default-config": "./another/path/something.ts" },
 ```
-
-Single repo extension example
-
-Mono repo extension example
 
 
 ## License

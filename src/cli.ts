@@ -5,10 +5,7 @@ import { app } from "./app";
 import type { LocalContext } from "./context";
 import { buildContext } from "./context";
 
-export const runCli = async (
-  args: string[],
-  context: LocalContext,
-): Promise<void> => {
+export const runCli = async (args: string[], context: LocalContext): Promise<void> => {
   await run(app, args, context);
 };
 

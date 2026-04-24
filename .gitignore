@@ -4,14 +4,4 @@ schema.json
 coverage
 *.log
 /e2e/
-plans/
-clones/
 
-# Demo generated files
-demo/.workdir/
-demo/frames/
-demo/*.gif
-demo/*.webm
-demo/*.webp
-demo/*.mp4
-demo/*.txt

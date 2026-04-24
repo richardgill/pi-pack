@@ -29,18 +29,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: .nvmrc
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+      - uses: ./.github/actions/setup
 
       - name: Create Release Pull Request
         id: changesets
@@ -48,7 +37,7 @@ jobs:
         with:
           title: "chore: release"
           commit: "chore: release"
-          version: bun run changeset-version
+          version: npm run changeset-version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -69,29 +58,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup Node
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: .nvmrc
+      - uses: ./.github/actions/setup
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Build all binaries
-        run: bun run build
+      - name: Build package
+        run: npm run build
         env:
           PI_PACK_VERSION: ${{ needs.create-release-pr.outputs.version }}
 
       - name: Setup npm auth
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
-      - name: Publish to npm and prepare assets
-        run: bun run scripts/publish.ts --mode=release --version=${{ needs.create-release-pr.outputs.version }}
+      - name: Publish to npm
+        run: npm run publish-package -- --mode=release --version=${{ needs.create-release-pr.outputs.version }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -103,38 +81,10 @@ jobs:
 
             See [CHANGELOG](https://github.com/richardgill/pi-pack/blob/main/CHANGELOG.md) for details.
 
-            ### Installation
-
-            **Install script (recommended):**
-            ```bash
-            curl -fsSL https://raw.githubusercontent.com/richardgill/pi-pack/main/install | bash
-            ```
-
-            **Via npm:**
             ```bash
             npm install -g pi-pack
-            ```
-
-            Or use directly:
-            ```bash
             npx pi-pack --version
             ```
-
-            **Manual download:**
-            | Platform | Architecture | Download |
-            |----------|--------------|----------|
-            | Linux | x64 | `pi-pack-linux-x64.tar.gz` |
-            | Linux | arm64 | `pi-pack-linux-arm64.tar.gz` |
-            | macOS | Intel | `pi-pack-darwin-x64.zip` |
-            | macOS | Apple Silicon | `pi-pack-darwin-arm64.zip` |
-            | Windows | x64 | `pi-pack-windows-x64.zip` |
-          files: |
-            release/pi-pack-linux-x64.tar.gz
-            release/pi-pack-linux-arm64.tar.gz
-            release/pi-pack-darwin-x64.zip
-            release/pi-pack-darwin-arm64.zip
-            release/pi-pack-windows-x64.zip
-            release/checksums.txt
           draft: false
           prerelease: ${{ contains(needs.create-release-pr.outputs.version, '-') }}
         env:

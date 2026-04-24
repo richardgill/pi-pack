@@ -14,7 +14,7 @@ jobs:
       - uses: ./.github/actions/setup
 
       - name: Lint
-        run: bun run check
+        run: npm run check
 
   misc-checks:
     name: Misc checks
@@ -24,7 +24,7 @@ jobs:
       - uses: ./.github/actions/setup
 
       - name: Misc checks
-        run: bun run misc-checks
+        run: npm run misc-checks
 
   typecheck:
     name: Typecheck
@@ -34,7 +34,7 @@ jobs:
       - uses: ./.github/actions/setup
 
       - name: Typecheck
-        run: bun run typecheck
+        run: npm run typecheck
 
   test:
     name: Test
@@ -44,7 +44,7 @@ jobs:
       - uses: ./.github/actions/setup
 
       - name: Test
-        run: bun run test
+        run: npm run test
 
   knip:
     name: Dead code check
@@ -54,5 +54,4 @@ jobs:
       - uses: ./.github/actions/setup
 
       - name: Knip
-        run: bun run knip
-
+        run: npm run knip

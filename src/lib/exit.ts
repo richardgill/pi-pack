@@ -11,9 +11,7 @@ export const exit = (
   },
 ): never => {
   if (stderr) {
-    context.process.stderr.write(
-      stderr.endsWith("\n") ? stderr : `${stderr}\n`,
-    );
+    context.process.stderr.write(stderr.endsWith("\n") ? stderr : `${stderr}\n`);
   }
 
   context.process.exit(exitCode);

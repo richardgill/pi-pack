@@ -1,10 +1,8 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["src/**/*.{unit,e2e}.test.ts", "scripts/*.ts"],
+  "entry": ["src/**/*.{unit,e2e}.test.ts", "scripts/*.ts", "vite.config.ts"],
   "project": ["src/**/*.ts", "scripts/**/*.ts"],
-  "lefthook": false,
-  "ignoreBinaries": ["tar", "sha256sum"],
-  "ignoreDependencies": ["@clack/prompts", "es-toolkit"],
+  "ignoreDependencies": ["@clack/prompts", "syncpack"],
   "ignore": [
     "src/lib/env.ts",
     "src/lib/exit.ts",

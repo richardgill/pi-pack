@@ -5,11 +5,7 @@ import { runUpdate } from "./impl";
 
 const parseString = (input: string): string => input;
 
-export const updateCommand = buildCommand<
-  UpdateFlags,
-  UpdateArgs,
-  LocalContext
->({
+export const updateCommand = buildCommand<UpdateFlags, UpdateArgs, LocalContext>({
   parameters: {
     flags: {
       all: {

@@ -8,19 +8,18 @@ This is a CLI tool for installing and updating pi extensions.
 
 ## Development Commands
 
-- `bun run dev` - Run CLI in development with bun
+- `npm run dev` - Run CLI in development with Node
 - Use dashes (not colons) for package.json script names: `test-node` not `test:node`
 
 ## Key Dependencies
 
 - `@stricli/core` - CLI framework
-- `es-toolkit` - Utility functions (lodash alternative)
-- `clack` - Interactive prompts
-- `zod` - Runtime validation
+- `@clack/prompts` - Interactive prompts
+- `vite-plus` - build, lint, format, and test toolchain
 
 ## Checking all changes
 
-Always run `bun run local-ci` it runs formatter, linter & tests
+Always run `npm run local-ci` it runs formatter, linter, tests, build, and knip
 
 ## Testing
 

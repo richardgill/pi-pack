@@ -16,10 +16,7 @@ type TestablePromptsOptions = {
   onPromptRecord?: (prompt: RecordedPrompt) => void;
 };
 
-const createTestablePrompts = ({
-  promptHandler,
-  onPromptRecord,
-}: TestablePromptsOptions) => {
+const createTestablePrompts = ({ promptHandler, onPromptRecord }: TestablePromptsOptions) => {
   const processResponse = async <T extends string | boolean>(
     promptInfo: PromptInfo,
     defaultValue: T | undefined,
@@ -50,9 +47,7 @@ const createTestablePrompts = ({
   };
 
   return {
-    text: async (
-      opts: Omit<Parameters<typeof clackPrompts.text>[0], "input" | "output">,
-    ) => {
+    text: async (opts: Omit<Parameters<typeof clackPrompts.text>[0], "input" | "output">) => {
       const promptInfo: PromptInfo = {
         type: "text",
         message: opts.message as string,
@@ -62,12 +57,7 @@ const createTestablePrompts = ({
       return processResponse<string>(promptInfo, opts.initialValue);
     },
 
-    confirm: async (
-      opts: Omit<
-        Parameters<typeof clackPrompts.confirm>[0],
-        "input" | "output"
-      >,
-    ) => {
+    confirm: async (opts: Omit<Parameters<typeof clackPrompts.confirm>[0], "input" | "output">) => {
       const promptInfo: PromptInfo = {
         type: "confirm",
         message: opts.message as string,
@@ -76,10 +66,7 @@ const createTestablePrompts = ({
       return processResponse<boolean>(promptInfo, opts.initialValue);
     },
 
-    select: async (opts: {
-      message: string;
-      options: Array<{ value: string; label: string }>;
-    }) => {
+    select: async (opts: { message: string; options: Array<{ value: string; label: string }> }) => {
       const promptInfo: PromptInfo = {
         type: "select",
         message: opts.message,
@@ -97,16 +84,12 @@ const createTestablePrompts = ({
 
 export const canPrompt = (context: LocalContext): boolean => {
   const inputStream = context.promptInput;
-  const isTTY = Boolean(
-    inputStream && "isTTY" in inputStream && inputStream.isTTY,
-  );
+  const isTTY = Boolean(inputStream && "isTTY" in inputStream && inputStream.isTTY);
   const hasPromptHandler = context.promptHandler !== undefined;
   return !isCI(context) && (isTTY || hasPromptHandler);
 };
 
-export const promptForManualSha = async (
-  prompts: Prompts,
-): Promise<string | symbol> => {
+export const promptForManualSha = async (prompts: Prompts): Promise<string | symbol> => {
   const manualSha = await prompts.text({
     message: "Enter commit SHA or tag:",
     placeholder: "e.g., abc123def or v1.0.0",
@@ -137,21 +120,13 @@ export const createPrompts = (context: LocalContext) => {
   };
 
   return {
-    text: (
-      opts: Omit<Parameters<typeof clackPrompts.text>[0], "input" | "output">,
-    ) => clackPrompts.text({ ...opts, ...streamOpts }),
+    text: (opts: Omit<Parameters<typeof clackPrompts.text>[0], "input" | "output">) =>
+      clackPrompts.text({ ...opts, ...streamOpts }),
 
-    confirm: (
-      opts: Omit<
-        Parameters<typeof clackPrompts.confirm>[0],
-        "input" | "output"
-      >,
-    ) => clackPrompts.confirm({ ...opts, ...streamOpts }),
+    confirm: (opts: Omit<Parameters<typeof clackPrompts.confirm>[0], "input" | "output">) =>
+      clackPrompts.confirm({ ...opts, ...streamOpts }),
 
-    select: (opts: {
-      message: string;
-      options: Array<{ value: string; label: string }>;
-    }) =>
+    select: (opts: { message: string; options: Array<{ value: string; label: string }> }) =>
       clackPrompts.select({
         message: opts.message,
         options: opts.options.map((o) => ({ value: o.value, label: o.label })),

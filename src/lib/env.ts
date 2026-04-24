@@ -11,16 +11,16 @@ export const isAiAgent = (context: LocalContext): boolean => {
   const env = context.process.env;
   return Boolean(
     env["CLAUDECODE"] ||
-      env["CLAUDE_CODE"] ||
-      env["CLAUDE_CODE_ACTION"] ||
-      env["CURSOR_TRACE_ID"] ||
-      env["CURSOR_AGENT"] ||
-      env["GEMINI_CLI"] ||
-      env["CODEX_SANDBOX"] ||
-      env["REPL_ID"] ||
-      env["CLINE"] ||
-      env["AIDER"] ||
-      env["WINDSURF"] ||
-      env["AI_AGENT"],
+    env["CLAUDE_CODE"] ||
+    env["CLAUDE_CODE_ACTION"] ||
+    env["CURSOR_TRACE_ID"] ||
+    env["CURSOR_AGENT"] ||
+    env["GEMINI_CLI"] ||
+    env["CODEX_SANDBOX"] ||
+    env["REPL_ID"] ||
+    env["CLINE"] ||
+    env["AIDER"] ||
+    env["WINDSURF"] ||
+    env["AI_AGENT"],
   );
 };

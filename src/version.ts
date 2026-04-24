@@ -1,16 +1,15 @@
-// At build time, PI_PACK_VERSION is injected via `define` in scripts/build.ts
+import { readFile } from "node:fs/promises";
+
+// At build time, PI_PACK_VERSION is injected via `define` in vite.config.ts
 // At runtime in dev, we read from package.json
 // Falls back to "0.0.0" if neither is available
 
 // Must use literal string for bundler's define replacement to work (not dynamic property access)
-// biome-ignore lint/suspicious/noExplicitAny: required for bundler define replacement
-const INJECTED_VERSION = (process.env as any).PI_PACK_VERSION as
-  | string
-  | undefined;
+const INJECTED_VERSION = process.env["PI_PACK_VERSION"];
 
 const getVersionFromPackageJson = async (): Promise<string> => {
   try {
-    const pkg = await Bun.file("./package.json").json();
+    const pkg = JSON.parse(await readFile("./package.json", "utf8"));
     return pkg.version ?? "0.0.0";
   } catch {
     return "0.0.0";

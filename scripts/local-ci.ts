@@ -1,54 +1,47 @@
-#!/usr/bin/env bun
+import { spawn } from "node:child_process";
 
-import { $ } from "bun";
+type Command = readonly [string, readonly string[]];
 
 type CommandResult = {
   command: string;
-  exitCode: number;
-  output: string;
+  exitCode: number | null;
 };
 
-const runCommand = async (command: string): Promise<CommandResult> => {
-  const result = await $`${command.split(" ")}`.nothrow().quiet();
-  const output = result.stdout.toString() + result.stderr.toString();
-  return { command, exitCode: result.exitCode, output };
-};
-
-const checkStaleLockfile = async (): Promise<CommandResult> => {
-  const result = await $`bun install --frozen-lockfile`.nothrow().quiet();
-  const output = result.stdout.toString() + result.stderr.toString();
-  return { command: "bun lockfile check", exitCode: result.exitCode, output };
-};
-
-const commands = [
-  "bun run typecheck",
-  "bun run check",
-  "bun run misc-checks",
-  "bun run test",
-  "bun run knip",
+const commands: Command[] = [
+  ["npm", ["install"]],
+  ["npm", ["run", "check"]],
+  ["npm", ["run", "misc-checks"]],
+  ["npm", ["run", "test"]],
+  ["npm", ["run", "build"]],
+  ["npm", ["run", "knip"]],
 ];
 
-console.log(`Running local-ci: ${commands.join(", ")}, bun lockfile check\n`);
+const formatCommand = ([command, args]: Command) => [command, ...args].join(" ");
 
-const results = await Promise.all([
-  ...commands.map(runCommand),
-  checkStaleLockfile(),
-]);
+const runCommand = (commandToRun: Command): Promise<CommandResult> =>
+  new Promise((resolve) => {
+    const [command, args] = commandToRun;
+    const child = spawn(command, args, { stdio: "inherit" });
+    child.on("close", (exitCode) => resolve({ command: formatCommand(commandToRun), exitCode }));
+  });
 
-const successes = results.filter((r) => r.exitCode === 0);
-const failures = results.filter((r) => r.exitCode !== 0);
+const runCiCommand = async (command: Command) => {
+  const result = await runCommand(command);
 
-for (const result of successes) {
+  if (result.exitCode !== 0) {
+    console.error(`\n❌ ${result.command} failed`);
+    process.exit(2);
+  }
+
   console.log(`✅ ${result.command} success`);
-}
+};
 
-for (const result of failures) {
-  console.log(`\n❌ ${result.command} failed:\n`);
-  console.log(result.output);
-}
+const main = async () => {
+  console.log(`Running local-ci: ${commands.map(formatCommand).join(", ")}\n`);
 
-if (failures.length > 0) {
-  console.error("\nPlease fix the issues above");
-  // Exit code 2 tells Claude Code to stop and let the user handle the issues
-  process.exit(2);
-}
+  for (const command of commands) {
+    await runCiCommand(command);
+  }
+};
+
+void main();

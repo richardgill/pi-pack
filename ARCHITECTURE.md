@@ -8,26 +8,25 @@ pi-pack is a packaging system for [pi](https://github.com/badlogic/pi-mono) exte
 
 ## Tech stack
 
-- Bun
+- Node.js
+- Vite+
 - Stricli
 - Clack
 - AI agent optimized
-  - `bun run local-ci` runs:
-    - Biome formatting and linting
-    - tsc
-    - Knip (dead code analysis)
+  - `npm run local-ci` runs:
+    - Vite+ formatting, linting, and type checks
     - tests
+    - Vite+ package build
+    - Knip (dead code analysis)
 - Extensive end-to-end testing using `runCli('pi-pack install …')` in tests
   - Tests run fast in-process
 - Changesets with automated release PRs
 
 ## Binaries / Runtime
 
-Distributed as:
-- Bun binaries: e.g. `pi-pack-linux-x64`.
-  - Install: `curl -fsSL https://raw.githubusercontent.com/richardgill/pi-pack/main/install | bash`
-- npm package which immediately executes bun binary
-  - `npx pi-pack`
+Distributed as a Node-based npm package:
+- Install: `npm install -g pi-pack`
+- Run directly: `npx pi-pack`
 
 ## One time setup
 
@@ -81,7 +80,7 @@ pi-pack uses [Changesets](https://github.com/changesets/changesets) for versioni
 When you make a change that should be released, add a changeset:
 
 ```sh
-bun run changeset
+npm run changeset
 ```
 
 This will prompt you to:
@@ -106,14 +105,6 @@ When changes with changesets are merged to `main`:
 
 2. **Merge the Release PR**: When you're ready to release, merge the release PR. This triggers:
 
-3. **Binary Builds**: Native binaries are built for all platforms:
-   - `pi-pack-linux-x64`
-   - `pi-pack-linux-arm64`
-   - `pi-pack-darwin-x64`
-   - `pi-pack-darwin-arm64`
-   - `pi-pack-windows-x64`
+3. **Package Build**: Vite+ builds the Node package.
 
-4. **GitHub Release**: A GitHub release is created with:
-   - Platform-specific archives (`.tar.gz` for Linux, `.zip` for macOS/Windows)
-   - SHA256 checksums
-   - Installation instructions
+4. **GitHub Release**: The package is published to npm and a GitHub release is created with installation instructions.

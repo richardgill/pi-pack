@@ -18,7 +18,7 @@ Only prompt if they do not provide it
 
 2. Create a changeset file in `.changeset/` directory with a descriptive name based on the feature or change (e.g., `add-dark-mode.md`, `fix-login-bug.md`, `rename-config-fields.md`)
 
-3. Add a todo at the end to verify the changeset with `bun run changeset status`
+3. Add a todo at the end to verify the changeset with `npm run changeset status`
 
 ## Example Changeset
 

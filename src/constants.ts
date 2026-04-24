@@ -1,1 +1,0 @@
-export const PI_PACK_VERSION_ENV_VAR = "PI_PACK_VERSION";

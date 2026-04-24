@@ -29,7 +29,7 @@ This document describes **what each CLI endpoint does** (user-visible behavior).
 
 - The extensions root is resolved using pi’s own extensions-directory resolution (via the pi coding agent).
   - There is no CLI override; `pi-pack` always installs where pi will load extensions.
-- `pnpm` is installed/managed automatically by `pi-pack` (via npm); no pre-install is required.
+- Dependencies are installed with npm; no extra package manager is required.
   - This enables installs from git and installs from monorepo subpaths.
 
 ## Directory layout (installed extension)
@@ -38,7 +38,7 @@ Each installed extension is a directory under the extensions root:
 
 - `<extensionsRoot>/<extensionName>/index.ts` — user-editable config/entrypoint (pi loads this)
 - `<extensionsRoot>/<extensionName>/package.json` — local package manifest that depends on the extension package
-- `<extensionsRoot>/<extensionName>/pnpm-lock.yaml` — lockfile for reproducible installs
+- `<extensionsRoot>/<extensionName>/package-lock.json` — lockfile for reproducible installs
 - `<extensionsRoot>/<extensionName>/node_modules/` — installed dependencies
 
 The CLI must always print the resolved `<extensionsRoot>` it is operating on.
@@ -164,7 +164,7 @@ Primary behaviors:
 3. **Install dependency**
    - Ensure the target dir ends up with a local dependency on the extension package described by `<source>` (and `--path` if given).
    - Ensure dependencies are installed so that `index.ts` can import the extension package.
-   - Dependency installation uses `pnpm` (managed by `pi-pack`; required for monorepo `--path` support).
+   - Dependency installation uses npm.
 
 4. **Scaffold `index.ts`**
    - Locate the extension package’s **default config** file (see contract above).
@@ -211,7 +211,7 @@ Primary behaviors:
 
 2. **Update installed dependency**
    - Update the extension package dependency according to the version/range/ref already recorded in the installed extension’s manifest.
-   - Dependency updates use `pnpm` (managed by `pi-pack`).
+   - Dependency updates use npm.
 
 3. **Protect user config**
    - Never overwrite `index.ts` during update.

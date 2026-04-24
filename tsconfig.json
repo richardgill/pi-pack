@@ -21,14 +21,14 @@
     "noUnusedParameters": true,
     "noPropertyAccessFromIndexSignature": true,
 
-    "rootDir": "./src",
+    "rootDir": ".",
     "outDir": "./dist",
     "forceConsistentCasingInFileNames": true,
 
     "declaration": true,
     "declarationMap": true,
-    "types": ["bun-types"]
+    "types": ["node", "vite-plus/test"]
   },
-  "include": ["src"],
+  "include": ["src", "scripts", "vite.config.ts"],
   "exclude": ["node_modules", "dist"]
 }

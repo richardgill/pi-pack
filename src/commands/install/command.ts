@@ -5,11 +5,7 @@ import { runInstall } from "./impl";
 
 const parseString = (input: string): string => input;
 
-export const installCommand = buildCommand<
-  InstallFlags,
-  InstallArgs,
-  LocalContext
->({
+export const installCommand = buildCommand<InstallFlags, InstallArgs, LocalContext>({
   parameters: {
     flags: {
       path: {

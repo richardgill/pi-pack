@@ -1,89 +1,58 @@
-#!/usr/bin/env bun
+import { spawn } from "node:child_process";
+import type { Dirent } from "node:fs";
+import { readdir } from "node:fs/promises";
+import { join } from "node:path";
 
-import { $, Glob } from "bun";
-import chalk from "chalk";
+const validTestSuffixes = [".unit.test.ts", ".integration.test.ts", ".e2e.test.ts"];
 
-const VALID_TEST_SUFFIXES = [
-  ".unit.test.ts",
-  ".integration.test.ts",
-  ".e2e.test.ts",
-];
-
-const findInvalidTestFiles = async (): Promise<string[]> => {
-  const glob = new Glob("**/*.test.ts");
-  const invalidFiles: string[] = [];
-  const directories = ["src", "scripts"];
-
-  for (const dir of directories) {
-    for await (const file of glob.scan({ cwd: dir })) {
-      const isValid = VALID_TEST_SUFFIXES.some((suffix) =>
-        file.endsWith(suffix),
-      );
-      if (!isValid) {
-        invalidFiles.push(`${dir}/${file}`);
-      }
-    }
-  }
-
-  return invalidFiles.sort();
+const findEntryFiles = async (dir: string, entry: Dirent): Promise<string[]> => {
+  const path = join(dir, entry.name);
+  return entry.isDirectory() ? findFiles(path) : [path];
 };
 
-const checkTestNaming = async (): Promise<boolean> => {
+const findFiles = async (dir: string): Promise<string[]> => {
+  const entries = await readdir(dir, { withFileTypes: true });
+  const nested = await Promise.all(entries.map((entry) => findEntryFiles(dir, entry)));
+  return nested.flat();
+};
+
+const findInvalidTestFiles = async () => {
+  const files = (await Promise.all(["src", "scripts"].map(findFiles))).flat();
+  return files
+    .filter((file) => file.endsWith(".test.ts"))
+    .filter((file) => !validTestSuffixes.some((suffix) => file.endsWith(suffix)))
+    .sort();
+};
+
+const run = (command: string, args: string[]) =>
+  new Promise<number>((resolve) => {
+    const child = spawn(command, args, { stdio: "inherit" });
+    child.on("close", (exitCode) => resolve(exitCode ?? 1));
+  });
+
+const checkTestNaming = async () => {
   const invalidFiles = await findInvalidTestFiles();
 
   if (invalidFiles.length === 0) {
-    console.log(chalk.green("✓ All test files use valid naming conventions"));
-    console.log(
-      chalk.dim(`  Valid patterns: ${VALID_TEST_SUFFIXES.join(", ")}`),
-    );
+    console.log("✓ All test files use valid naming conventions");
     return true;
   }
 
-  console.log(
-    chalk.red(
-      `✗ Found ${invalidFiles.length} test file(s) with invalid naming:\n`,
-    ),
+  console.error(
+    `✗ Found invalid test file names:\n${invalidFiles.map((file) => `  ${file}`).join("\n")}`,
   );
-
-  for (const file of invalidFiles) {
-    console.log(chalk.yellow(`  ${file}`));
-  }
-
-  console.log(
-    chalk.dim(
-      `\nTest files must end with: ${VALID_TEST_SUFFIXES.join(" or ")}`,
-    ),
-  );
-  console.log(chalk.dim("Rename files to use .unit.test.ts or .e2e.test.ts"));
-  return false;
-};
-
-const checkVersions = async (): Promise<boolean> => {
-  const result = await $`syncpack lint`.quiet().nothrow();
-
-  if (result.exitCode === 0) {
-    console.log(chalk.green("✓ Package versions are valid"));
-    return true;
-  }
-
-  console.log(chalk.red("✗ Package version issues found:\n"));
-  console.log(result.text());
   return false;
 };
 
 const main = async () => {
-  console.log(chalk.bold("Running miscellaneous checks...\n"));
+  const testNamingPassed = await checkTestNaming();
+  const versionsPassed = (await run("npm", ["exec", "syncpack", "lint"])) === 0;
 
-  const results = await Promise.all([checkTestNaming(), checkVersions()]);
-
-  const allPassed = results.every(Boolean);
-
-  if (!allPassed) {
-    console.log(chalk.red("\n✗ Some checks failed"));
+  if (!testNamingPassed || !versionsPassed) {
     process.exit(1);
   }
 
-  console.log(chalk.green("\n✓ All checks passed"));
+  console.log("✓ All miscellaneous checks passed");
 };
 
-main();
+void main();
