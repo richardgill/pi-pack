@@ -46,7 +46,7 @@ jobs:
         run: npm run publish-package -- --mode=preview --pr=${{ github.event.pull_request.number }} --version=${{ steps.version.outputs.version }}
 
       - name: Post PR comment
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v3
         with:
           header: pr-build
           message: |

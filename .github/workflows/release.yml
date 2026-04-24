@@ -72,7 +72,7 @@ jobs:
         run: npm run publish-package -- --mode=release --version=${{ needs.create-release-pr.outputs.version }}
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ needs.create-release-pr.outputs.version }}
           name: pi-pack v${{ needs.create-release-pr.outputs.version }}
