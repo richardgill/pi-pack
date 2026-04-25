@@ -4,6 +4,7 @@ import type { PromptHandler, RecordedPrompt } from "~/testing/prompt-testing-typ
 
 export type LocalContext = CommandContext & {
   readonly process: NodeJS.Process;
+  readonly verbose?: boolean;
   // used for testing
   readonly cwd: string;
   readonly promptInput?: Readable;
@@ -12,8 +13,17 @@ export type LocalContext = CommandContext & {
   readonly onPromptRecord?: (prompt: RecordedPrompt) => void;
 };
 
-export const buildContext = (proc: NodeJS.Process, cwd?: string): LocalContext => ({
+type BuildContextOptions = {
+  verbose?: boolean;
+};
+
+export const buildContext = (
+  proc: NodeJS.Process,
+  cwd?: string,
+  options: BuildContextOptions = {},
+): LocalContext => ({
   process: proc,
+  verbose: options.verbose,
   cwd: cwd ?? proc.cwd(),
   promptInput: proc.stdin,
   promptOutput: proc.stdout,

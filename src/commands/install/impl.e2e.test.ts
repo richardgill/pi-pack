@@ -248,9 +248,25 @@ test("pi-pack install refuses to overwrite an existing extension", async () => {
     const result = await runInstall(cwd, agentDir, [source]);
 
     expect(result.stderr).toContain("Delete it manually first");
+    expect(result.stderr).not.toContain("Command failed, Error:");
+    expect(result.stderr).not.toContain("\n    at ");
     expect(readText(path.join(agentDir, "extensions", "files"), "config.ts")).toBe(
       'export default "files@1.0.0";\n',
     );
+  });
+});
+
+test("pi-pack install --verbose shows stack traces for command failures", async () => {
+  await withTempDir(async (cwd) => {
+    const agentDir = path.join(cwd, "agent");
+    const source = createExtensionPackage(cwd, "files");
+
+    await runInstall(cwd, agentDir, [source]);
+
+    const result = await runInstall(cwd, agentDir, ["--verbose", source]);
+
+    expect(result.stderr).toContain("Command failed, Error: Extension already exists");
+    expect(result.stderr).toContain("\n    at ");
   });
 });
 

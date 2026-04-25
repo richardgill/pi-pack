@@ -3,6 +3,7 @@ import { run } from "@stricli/core";
 import { app } from "~/app";
 import { buildContext, type LocalContext } from "~/context";
 import { normalizeRootHelpArgs } from "~/lib/root-help";
+import { readCliRunArgs } from "~/lib/run-args";
 import { withEnvVar } from "./env";
 import type { PromptHandler } from "./prompt-testing-types";
 
@@ -25,8 +26,13 @@ export const runPiPack = async (
   promptHandler?: PromptHandler,
 ): Promise<RunResult> => {
   const output = createCapturedOutput();
+  const runArgs = readCliRunArgs(args);
   await withAgentDir(agentDir, async () => {
-    await run(app, normalizeRootHelpArgs(args), createContext(cwd, output, promptHandler));
+    await run(
+      app,
+      normalizeRootHelpArgs(runArgs.args),
+      createContext(cwd, output, runArgs.verbose, promptHandler),
+    );
   });
   return { stdout: output.readStdout(), stderr: output.readStderr() };
 };
@@ -34,9 +40,10 @@ export const runPiPack = async (
 const createContext = (
   cwd: string,
   output: CapturedOutput,
+  verbose: boolean,
   promptHandler?: PromptHandler,
 ): LocalContext => ({
-  ...buildContext(process, cwd),
+  ...buildContext(process, cwd, { verbose }),
   process: { ...process, stdout: output.stdout, stderr: output.stderr } as NodeJS.Process,
   promptHandler,
 });

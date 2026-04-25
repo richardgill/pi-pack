@@ -1,4 +1,17 @@
 import { spawn } from "node:child_process";
+import type { LocalContext } from "~/context";
+
+export type VerboseFlags = {
+  verbose?: boolean;
+};
+
+type CommandAction = () => Promise<void> | void;
+
+export const verboseFlag = {
+  kind: "boolean",
+  brief: "Show verbose logging",
+  optional: true,
+} as const;
 
 export const runCommand = (command: string, args: string[], cwd: string): Promise<void> =>
   new Promise((resolve, reject) => {
@@ -18,6 +31,23 @@ export const runCommand = (command: string, args: string[], cwd: string): Promis
       reject(new Error(formatCommandError(command, args, code, stdout, stderr)));
     });
   });
+
+export const runUserCommand = async (
+  context: LocalContext,
+  action: CommandAction,
+): Promise<void | Error> => {
+  try {
+    await action();
+  } catch (error) {
+    if (context.verbose === true) throw error;
+    return toCommandError(error);
+  }
+};
+
+const toCommandError = (error: unknown): Error => {
+  if (error instanceof Error) return new Error(error.message);
+  return new Error(String(error));
+};
 
 const formatCommandError = (
   command: string,

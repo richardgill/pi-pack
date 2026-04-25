@@ -20,6 +20,7 @@ INSTALL SOURCES
 FLAGS
   -h --help     Print help information and exit
   -v --version  Print version information and exit
+  --verbose     Show verbose logging
 
 COMMANDS
   install    Install an extension package

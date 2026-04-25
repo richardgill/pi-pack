@@ -1,9 +1,10 @@
 import type { LocalContext } from "~/context";
+import type { VerboseFlags } from "~/lib/command";
 import { upgradeTargets } from "./runner";
 import { printUpgradeFailures, printUpgradeSummary } from "./summary";
 import { resolveUpgradeTargets } from "./targets";
 
-export type UpgradeFlags = {
+export type UpgradeFlags = VerboseFlags & {
   bump?: boolean;
 };
 

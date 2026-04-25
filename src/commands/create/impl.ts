@@ -1,5 +1,6 @@
 import path from "node:path";
 import type { LocalContext } from "~/context";
+import type { VerboseFlags } from "~/lib/command";
 import { assertSafeRelativePath, assertSafePathSegment } from "~/lib/path";
 import { assertSafeExtensionName } from "~/lib/pi";
 import { createPrompts, maybeCreatePrompts } from "~/lib/prompts";
@@ -10,7 +11,7 @@ import {
   readConfiguredRepoName,
 } from "./scaffold";
 
-export type CreateFlags = {
+export type CreateFlags = VerboseFlags & {
   mono?: boolean;
   monoDir?: string;
 };

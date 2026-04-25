@@ -1,5 +1,6 @@
 import { rmSync } from "node:fs";
 import type { LocalContext } from "~/context";
+import type { VerboseFlags } from "~/lib/command";
 import {
   listManagedExtensions,
   resolveManagedExtensions,
@@ -7,7 +8,7 @@ import {
 } from "~/lib/managed-extensions";
 import { createPrompts, maybeCreatePrompts } from "~/lib/prompts";
 
-export type UninstallFlags = {
+export type UninstallFlags = VerboseFlags & {
   yes?: boolean;
 };
 

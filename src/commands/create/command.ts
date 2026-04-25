@@ -1,6 +1,7 @@
 import { buildCommand } from "@stricli/core";
 import type { LocalContext } from "~/context";
 import { parseString } from "~/lib/cli";
+import { runUserCommand, verboseFlag } from "~/lib/command";
 import type { CreateArgs, CreateFlags } from "./impl";
 import { runCreate } from "./impl";
 
@@ -18,6 +19,7 @@ export const createCommand = buildCommand<CreateFlags, CreateArgs, LocalContext>
         brief: "Create a monorepo root",
         optional: true,
       },
+      verbose: verboseFlag,
     },
     positional: {
       kind: "tuple",
@@ -34,6 +36,6 @@ export const createCommand = buildCommand<CreateFlags, CreateArgs, LocalContext>
     brief: "Create an extension package",
   },
   func: async function (this: LocalContext, flags, name) {
-    await runCreate(this, flags, name);
+    return runUserCommand(this, () => runCreate(this, flags, name));
   },
 });
