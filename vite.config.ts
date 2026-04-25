@@ -13,7 +13,7 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["src/**/*.{unit,e2e}.test.ts"],
+    include: ["src/**/*.{unit,integration,e2e}.test.ts"],
   },
   lint: {
     ignorePatterns: ["dist/**", "node_modules/**", "coverage/**", "e2e/tmp/**", "overlay/**"],

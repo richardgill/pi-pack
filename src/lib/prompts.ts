@@ -17,35 +17,6 @@ type TestablePromptsOptions = {
 };
 
 const createTestablePrompts = ({ promptHandler, onPromptRecord }: TestablePromptsOptions) => {
-  const processResponse = async <T extends string | boolean | string[]>(
-    promptInfo: PromptInfo,
-    defaultValue: T | undefined,
-  ): Promise<T | symbol> => {
-    const response = await promptHandler(promptInfo);
-
-    let actualResponse: T | "cancelled" | "default";
-    let returnValue: T | symbol;
-
-    if (response === cancel) {
-      actualResponse = "cancelled";
-      returnValue = testCancelSymbol;
-    } else if (response === acceptDefault) {
-      if (defaultValue === undefined) {
-        throw new Error(
-          `acceptDefault used but prompt has no default value: ${promptInfo.message}`,
-        );
-      }
-      actualResponse = "default";
-      returnValue = defaultValue;
-    } else {
-      actualResponse = response as T;
-      returnValue = response as T;
-    }
-
-    onPromptRecord?.({ ...promptInfo, response: actualResponse });
-    return returnValue;
-  };
-
   return {
     text: async (opts: Omit<Parameters<typeof clackPrompts.text>[0], "input" | "output">) => {
       const promptInfo: PromptInfo = {
@@ -54,7 +25,7 @@ const createTestablePrompts = ({ promptHandler, onPromptRecord }: TestablePrompt
         placeholder: opts.placeholder,
         defaultValue: opts.initialValue,
       };
-      return processResponse<string>(promptInfo, opts.initialValue);
+      return processPromptResponse(promptHandler, onPromptRecord, promptInfo, opts.initialValue);
     },
 
     confirm: async (opts: Omit<Parameters<typeof clackPrompts.confirm>[0], "input" | "output">) => {
@@ -63,7 +34,7 @@ const createTestablePrompts = ({ promptHandler, onPromptRecord }: TestablePrompt
         message: opts.message as string,
         initialValue: opts.initialValue,
       };
-      return processResponse<boolean>(promptInfo, opts.initialValue);
+      return processPromptResponse(promptHandler, onPromptRecord, promptInfo, opts.initialValue);
     },
 
     select: async (opts: { message: string; options: Array<{ value: string; label: string }> }) => {
@@ -72,7 +43,7 @@ const createTestablePrompts = ({ promptHandler, onPromptRecord }: TestablePrompt
         message: opts.message,
         options: opts.options,
       };
-      return processResponse<string>(promptInfo, undefined);
+      return processPromptResponse<string>(promptHandler, onPromptRecord, promptInfo, undefined);
     },
 
     multiselect: async (opts: {
@@ -86,7 +57,7 @@ const createTestablePrompts = ({ promptHandler, onPromptRecord }: TestablePrompt
         options: opts.options,
         required: opts.required,
       };
-      return processResponse<string[]>(promptInfo, undefined);
+      return processPromptResponse<string[]>(promptHandler, onPromptRecord, promptInfo, undefined);
     },
 
     isCancel: (value: unknown): value is symbol =>
@@ -94,6 +65,34 @@ const createTestablePrompts = ({ promptHandler, onPromptRecord }: TestablePrompt
     log: clackPrompts.log,
     outro: clackPrompts.outro,
   };
+};
+
+const processPromptResponse = async <T extends string | boolean | string[]>(
+  promptHandler: PromptHandler,
+  onPromptRecord: ((prompt: RecordedPrompt) => void) | undefined,
+  promptInfo: PromptInfo,
+  defaultValue: T | undefined,
+): Promise<T | symbol> => {
+  const response = await promptHandler(promptInfo);
+
+  if (response === cancel)
+    return recordPromptResponse<T>(onPromptRecord, promptInfo, "cancelled", testCancelSymbol);
+  if (response !== acceptDefault)
+    return recordPromptResponse<T>(onPromptRecord, promptInfo, response as T, response as T);
+  if (defaultValue !== undefined)
+    return recordPromptResponse<T>(onPromptRecord, promptInfo, "default", defaultValue);
+
+  throw new Error(`acceptDefault used but prompt has no default value: ${promptInfo.message}`);
+};
+
+const recordPromptResponse = <T extends string | boolean | string[]>(
+  onPromptRecord: ((prompt: RecordedPrompt) => void) | undefined,
+  promptInfo: PromptInfo,
+  actualResponse: T | "cancelled" | "default",
+  returnValue: T | symbol,
+): T | symbol => {
+  onPromptRecord?.({ ...promptInfo, response: actualResponse });
+  return returnValue;
 };
 
 export const canPrompt = (context: LocalContext): boolean => {

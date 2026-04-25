@@ -7,32 +7,13 @@ import {
   createPackageWithoutDefaultConfig,
   readText,
 } from "~/testing/extension-package";
+import { withEnvVar } from "~/testing/env";
 import { expectPathExists, expectPathMissing } from "~/testing/fs";
 import { runPiPack } from "~/testing/pi-pack";
 import { withTempDir } from "~/testing/temp-dir";
 
 const runInstall = async (cwd: string, agentDir: string, args: string[]) =>
   runPiPack(cwd, agentDir, ["install", ...args]);
-
-const withHomeDir = async (homeDir: string, callback: () => Promise<void>): Promise<void> => {
-  const previous = process.env["HOME"];
-  process.env["HOME"] = homeDir;
-
-  try {
-    await callback();
-  } finally {
-    restoreHomeDir(previous);
-  }
-};
-
-const restoreHomeDir = (previous: string | undefined): void => {
-  if (previous === undefined) {
-    delete process.env["HOME"];
-    return;
-  }
-
-  process.env["HOME"] = previous;
-};
 
 test("pi-pack install installs a local package into pi's extensions dir", async () => {
   await withTempDir(async (cwd) => {
@@ -171,7 +152,7 @@ test("pi-pack install expands home-relative filesystem sources", async () => {
     const agentDir = path.join(cwd, "agent");
     createExtensionPackage(path.join(homeDir, "code"), "files");
 
-    await withHomeDir(homeDir, async () => {
+    await withEnvVar("HOME", homeDir, async () => {
       await runInstall(cwd, agentDir, ["~/code/files"]);
     });
 

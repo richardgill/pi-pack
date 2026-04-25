@@ -31,37 +31,44 @@ export const runCreate = async (
   const prompts = maybeCreatePrompts(context);
   const isMonorepoMode = await readMonorepoMode(prompts, flags, context.cwd, name);
   if (isMonorepoMode === undefined) return;
+  if (isMonorepoMode) return runCreateMonorepo(context, flags, prompts, name);
 
-  if (isMonorepoMode) {
-    const repoName = await readRepoName(prompts, name);
-    if (repoName === undefined) return;
-    assertSafePathSegment(repoName, "Repo name");
+  return runCreateExtension(context, prompts, name);
+};
 
-    const extensionsFolder = await readExtensionsFolder(prompts, flags);
-    if (extensionsFolder === undefined) return;
-    assertSafeRelativePath(extensionsFolder, "Extensions folder");
+const runCreateMonorepo = async (
+  context: LocalContext,
+  flags: CreateFlags,
+  prompts: Prompts | undefined,
+  name?: string,
+): Promise<void> => {
+  const repoName = await readRepoName(prompts, name);
+  if (repoName === undefined) return;
+  assertSafePathSegment(repoName, "Repo name");
 
-    const firstExtensionName = await readFirstMonorepoExtensionName(prompts);
-    if (prompts !== undefined && firstExtensionName === undefined) return;
-    if (firstExtensionName !== undefined) assertSafeExtensionName(firstExtensionName);
+  const extensionsFolder = await readExtensionsFolder(prompts, flags);
+  if (extensionsFolder === undefined) return;
+  assertSafeRelativePath(extensionsFolder, "Extensions folder");
 
-    const monoRoot = path.join(context.cwd, repoName);
-    createMono({
-      type: "mono",
-      cwd: context.cwd,
-      repoName,
-      extensionsFolder,
-      firstExtensionName,
-    });
-    const firstExtension = createFirstMonorepoExtension(
-      monoRoot,
-      extensionsFolder,
-      firstExtensionName,
-    );
-    writeMonorepoCreateResult(context, monoRoot, firstExtension?.root);
-    return;
-  }
+  const firstExtensionName = await readFirstMonorepoExtensionName(prompts);
+  if (prompts !== undefined && firstExtensionName === undefined) return;
+  if (firstExtensionName !== undefined) assertSafeExtensionName(firstExtensionName);
 
+  const monoRoot = path.join(context.cwd, repoName);
+  createMono({ type: "mono", cwd: context.cwd, repoName, extensionsFolder, firstExtensionName });
+  const firstExtensionRoot = createFirstMonorepoExtensionRoot(
+    monoRoot,
+    extensionsFolder,
+    firstExtensionName,
+  );
+  writeMonorepoCreateResult(context, monoRoot, firstExtensionRoot);
+};
+
+const runCreateExtension = async (
+  context: LocalContext,
+  prompts: Prompts | undefined,
+  name?: string,
+): Promise<void> => {
   const extensionName = await readExtensionName(prompts, name);
   if (extensionName === undefined) return;
   assertSafeExtensionName(extensionName);
@@ -73,7 +80,7 @@ export const runCreate = async (
     extensionRoot,
     readmeContext: extensionReadmeContext(context.cwd),
   });
-  writeCreateResult(context, "extension package", extensionName, extensionRoot);
+  writeExtensionCreateResult(context, extensionName, extensionRoot);
 };
 
 const readMonorepoMode = async (
@@ -165,11 +172,11 @@ const promptForCreateTarget = async (prompts: Prompts): Promise<CreateTarget | s
   return "extension";
 };
 
-const createFirstMonorepoExtension = (
+const createFirstMonorepoExtensionRoot = (
   monoRoot: string,
   extensionsFolder: string,
   extensionName: string | undefined,
-): { name: string; root: string } | undefined => {
+): string | undefined => {
   if (extensionName === undefined) return undefined;
 
   const extensionRoot = path.join(monoRoot, extensionsFolder, extensionName);
@@ -179,7 +186,7 @@ const createFirstMonorepoExtension = (
     extensionRoot,
     readmeContext: { type: "monorepo", repoName: path.basename(monoRoot), repoRoot: monoRoot },
   });
-  return { name: extensionName, root: extensionRoot };
+  return extensionRoot;
 };
 
 const resolveExtensionRoot = (cwd: string, extensionName: string): string => {
@@ -196,14 +203,9 @@ const extensionReadmeContext = (
   return { type: "monorepo", repoName: readConfiguredRepoName(cwd), repoRoot: cwd };
 };
 
-const writeCreateResult = (
-  context: LocalContext,
-  label: "extension package" | "extension monorepo",
-  name: string,
-  root: string,
-): void => {
+const writeExtensionCreateResult = (context: LocalContext, name: string, root: string): void => {
   context.process.stdout.write(
-    `\nCreated ${label} ${name} at ${formatRelativePath(context.cwd, root)}\n`,
+    `\nCreated extension package ${name} at ${formatRelativePath(context.cwd, root)}\n`,
   );
 };
 

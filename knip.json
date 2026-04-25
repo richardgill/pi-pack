@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["src/**/*.{unit,e2e}.test.ts", "scripts/*.ts", "vite.config.ts"],
+  "entry": ["src/**/*.{unit,integration,e2e}.test.ts", "scripts/*.ts", "vite.config.ts"],
   "project": ["src/**/*.ts", "scripts/**/*.ts"],
   "ignoreExportsUsedInFile": {
     "type": true

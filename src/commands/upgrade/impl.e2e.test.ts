@@ -12,6 +12,7 @@ import {
   readText,
   updateExtensionPackageVersion,
 } from "~/testing/extension-package";
+import { withEnvVar } from "~/testing/env";
 import { runPiPack } from "~/testing/pi-pack";
 import { withTempDir } from "~/testing/temp-dir";
 
@@ -124,29 +125,6 @@ const readServerUrl = (server: Server): string => {
   return `http://127.0.0.1:${(address as AddressInfo).port}`;
 };
 
-const withRegistryEnv = async (
-  registryUrl: string,
-  callback: () => Promise<void>,
-): Promise<void> => {
-  const previous = process.env["NPM_CONFIG_REGISTRY"];
-  process.env["NPM_CONFIG_REGISTRY"] = registryUrl;
-
-  try {
-    await callback();
-  } finally {
-    restoreRegistryEnv(previous);
-  }
-};
-
-const restoreRegistryEnv = (previous: string | undefined): void => {
-  if (previous === undefined) {
-    delete process.env["NPM_CONFIG_REGISTRY"];
-    return;
-  }
-
-  process.env["NPM_CONFIG_REGISTRY"] = previous;
-};
-
 const packRegistryVersion = (
   packageRoot: string,
   destinationRoot: string,
@@ -182,7 +160,7 @@ test("pi-pack upgrade --bump upgrades to latest and rewrites dependency range", 
     const second = packRegistryVersion(packageRoot, cwd, "2.0.0");
 
     await withPackageRegistry("files", [first, second], async (registryUrl) => {
-      await withRegistryEnv(registryUrl, async () => {
+      await withEnvVar("NPM_CONFIG_REGISTRY", registryUrl, async () => {
         await runInstall(cwd, agentDir, ["npm:files@^1.0.0"]);
 
         const extensionRoot = path.join(agentDir, "extensions", "files");

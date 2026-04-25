@@ -1,11 +1,9 @@
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { runCommand } from "~/lib/command";
-import { readJson } from "~/lib/json";
-import type { PackageJson } from "~/lib/package-json";
-import { assertSafeRelativePath } from "~/lib/path";
+import { readRequiredConfiguredExtensionsFolder } from "~/lib/package-config";
 import { assertSafeExtensionName } from "~/lib/pi";
 
 export const toPnpmDependency = async (
@@ -48,7 +46,7 @@ const readExtensionsFolder = async (cwd: string, source: string): Promise<string
 };
 
 const readLocalExtensionsFolder = (repoRoot: string): string =>
-  readConfiguredExtensionsFolder(path.join(repoRoot, "package.json"));
+  readRequiredConfiguredExtensionsFolder(path.join(repoRoot, "package.json"));
 
 const readGitExtensionsFolder = async (source: string): Promise<string> => {
   const parsed = parseGitSource(source);
@@ -56,7 +54,7 @@ const readGitExtensionsFolder = async (source: string): Promise<string> => {
 
   try {
     await checkoutGitPackageJson(tempRoot, parsed);
-    return readConfiguredExtensionsFolder(path.join(tempRoot, "package.json"));
+    return readRequiredConfiguredExtensionsFolder(path.join(tempRoot, "package.json"));
   } finally {
     rmSync(tempRoot, { recursive: true, force: true });
   }
@@ -70,16 +68,6 @@ const checkoutGitPackageJson = async (
   await runCommand("git", ["remote", "add", "origin", toGitCloneUrl(source.repo)], cwd);
   await runCommand("git", ["fetch", "--depth=1", "origin", source.ref ?? "HEAD"], cwd);
   await runCommand("git", ["checkout", "--force", "FETCH_HEAD", "--", "package.json"], cwd);
-};
-
-const readConfiguredExtensionsFolder = (packageJsonPath: string): string => {
-  if (!existsSync(packageJsonPath)) throw new Error(`Missing package.json: ${packageJsonPath}`);
-  const extensionsFolder = readJson<PackageJson>(packageJsonPath)["pi-pack"]?.["extensions-folder"];
-  if (extensionsFolder !== undefined) {
-    assertSafeRelativePath(extensionsFolder, "pi-pack.extensions-folder");
-    return extensionsFolder;
-  }
-  throw new Error(`Missing pi-pack.extensions-folder in ${packageJsonPath}`);
 };
 
 const resolveLocalSourceRoot = (cwd: string, source: string): string => {

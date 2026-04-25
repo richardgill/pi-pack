@@ -1,7 +1,10 @@
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { readJson, writeJson } from "~/lib/json";
-import type { PackageJson } from "~/lib/package-json";
+import {
+  readConfiguredExtensionsFolder as readPackageConfiguredExtensionsFolder,
+  readPackage,
+} from "~/lib/package-config";
+import { writeJson } from "~/lib/json";
 import { assertSafePathSegment, assertSafeRelativePath } from "~/lib/path";
 import { assertSafeExtensionName } from "~/lib/pi";
 import {
@@ -59,14 +62,8 @@ export const createExtension = (params: ExtensionCreateSelection): void => {
   writeExtensionFiles(params.extensionRoot, params.extensionName, params.readmeContext);
 };
 
-export const readConfiguredExtensionsFolder = (cwd: string): string | undefined => {
-  const extensionsFolder = readPackage(path.join(cwd, "package.json"))["pi-pack"]?.[
-    "extensions-folder"
-  ];
-  if (extensionsFolder === undefined) return undefined;
-  assertSafeRelativePath(extensionsFolder, "pi-pack.extensions-folder");
-  return extensionsFolder;
-};
+export const readConfiguredExtensionsFolder = (cwd: string): string | undefined =>
+  readPackageConfiguredExtensionsFolder(path.join(cwd, "package.json"));
 
 export const readConfiguredRepoName = (cwd: string): string =>
   readPackage(path.join(cwd, "package.json")).name ?? path.basename(cwd);
@@ -111,11 +108,6 @@ const extensionReadme = (
 
 const formatMarkdownPath = (markdownPath: string): string =>
   markdownPath.startsWith(".") ? markdownPath : `./${markdownPath}`;
-
-const readPackage = (packagePath: string): PackageJson => {
-  if (!existsSync(packagePath)) return {};
-  return readJson<PackageJson>(packagePath);
-};
 
 const assertCanWrite = (targetPath: string): void => {
   if (!existsSync(targetPath)) return;

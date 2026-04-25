@@ -3,6 +3,7 @@ import { run } from "@stricli/core";
 import { app } from "~/app";
 import { buildContext, type LocalContext } from "~/context";
 import { normalizeRootHelpArgs } from "~/lib/root-help";
+import { withEnvVar } from "./env";
 import type { PromptHandler } from "./prompt-testing-types";
 
 export type RunResult = {
@@ -60,22 +61,5 @@ const createWritable = (chunks: string[]): Writable =>
     },
   });
 
-const withAgentDir = async (agentDir: string, callback: () => Promise<void>): Promise<void> => {
-  const previous = process.env["PI_CODING_AGENT_DIR"];
-  process.env["PI_CODING_AGENT_DIR"] = agentDir;
-
-  try {
-    await callback();
-  } finally {
-    restoreAgentDir(previous);
-  }
-};
-
-const restoreAgentDir = (previous: string | undefined): void => {
-  if (previous === undefined) {
-    delete process.env["PI_CODING_AGENT_DIR"];
-    return;
-  }
-
-  process.env["PI_CODING_AGENT_DIR"] = previous;
-};
+const withAgentDir = async (agentDir: string, callback: () => Promise<void>): Promise<void> =>
+  withEnvVar("PI_CODING_AGENT_DIR", agentDir, callback);
