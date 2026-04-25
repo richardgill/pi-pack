@@ -25,7 +25,7 @@ pi-pack
 Or use directly without installing:
 
 ```sh
-npm exec pi-pack
+npx pi-pack@latest
 ```
 
 ### Installing extensions
