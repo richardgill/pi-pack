@@ -1,0 +1,32 @@
+import { buildCommand } from "@stricli/core";
+import type { LocalContext } from "~/context";
+import { parseString } from "~/lib/cli";
+import type { UpgradeArgs, UpgradeFlags } from "./impl";
+import { runUpgrade } from "./impl";
+
+export const upgradeCommand = buildCommand<UpgradeFlags, UpgradeArgs, LocalContext>({
+  parameters: {
+    flags: {
+      bump: {
+        kind: "boolean",
+        brief: "Upgrade to the latest version and rewrite dependency ranges",
+        optional: true,
+      },
+    },
+    positional: {
+      kind: "array",
+      minimum: 0,
+      parameter: {
+        brief: "Extension name to upgrade",
+        placeholder: "extension-name",
+        parse: parseString,
+      },
+    },
+  },
+  docs: {
+    brief: "Upgrade installed extensions",
+  },
+  func: async function (this: LocalContext, flags, ...extensionNames) {
+    await runUpgrade(this, flags, extensionNames);
+  },
+});
