@@ -13,6 +13,7 @@ export const isAiAgent = (context: LocalContext): boolean => {
     env["CLAUDECODE"] ||
     env["CLAUDE_CODE"] ||
     env["CLAUDE_CODE_ACTION"] ||
+    env["PI_CODING_AGENT"] ||
     env["CURSOR_TRACE_ID"] ||
     env["CURSOR_AGENT"] ||
     env["GEMINI_CLI"] ||
