@@ -4,10 +4,10 @@
   "description": "pi extension installer",
   "license": "MIT",
   "repository": {
-    "url": "https://github.com/richardgill/pi-pack"
+    "url": "git+https://github.com/richardgill/pi-pack.git"
   },
   "bin": {
-    "pi-pack": "./bin/pi-pack.cjs"
+    "pi-pack": "bin/pi-pack.cjs"
   },
   "files": [
     "bin",
