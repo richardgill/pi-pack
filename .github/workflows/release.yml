@@ -53,6 +53,9 @@ jobs:
     needs: create-release-pr
     if: needs.create-release-pr.outputs.should_publish == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
 
     steps:
       - name: Checkout
@@ -64,9 +67,6 @@ jobs:
         run: npm run build
         env:
           PI_PACK_VERSION: ${{ needs.create-release-pr.outputs.version }}
-
-      - name: Setup npm auth
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
       - name: Publish to npm
         run: npm run publish-package -- --mode=release --version=${{ needs.create-release-pr.outputs.version }}
