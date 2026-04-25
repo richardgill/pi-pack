@@ -32,7 +32,7 @@ export const inferPackageName = async (source: string): Promise<string> => {
 };
 
 export const pnpmAdd = async (cwd: string, source: string): Promise<void> => {
-  await runPnpm({ cwd, args: ["add", source] });
+  await runPnpm({ cwd, args: ["add", "--ignore-scripts", source] });
 };
 
 export const runPnpm = async ({ cwd, args }: RunPnpmOptions): Promise<void> => {

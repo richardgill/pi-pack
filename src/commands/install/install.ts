@@ -1,11 +1,14 @@
 import {
   copyFileSync,
   existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
+  realpathSync,
   renameSync,
   rmSync,
+  statSync,
 } from "node:fs";
 import path from "node:path";
 import { readJson, writeJson } from "~/lib/json";
@@ -14,6 +17,7 @@ import {
   installedExtensionPackageJson,
   type PackageJson,
 } from "~/lib/package-json";
+import { assertSafeRelativePath } from "~/lib/path";
 import { pnpmAdd } from "~/lib/pnpm";
 
 export type ResolvedInstall = {
@@ -66,14 +70,46 @@ const copyDefaultConfigToInstalledConfig = (install: TmpInstall): InstallResult 
   const packageJson = readJson<PackageJson>(path.join(packageRoot, "package.json"));
   const piPackConfig = packageJson["pi-pack"];
   const defaultConfig = piPackConfig?.["default-config"] ?? DEFAULT_CONFIG_PATH;
-  const sourcePath = path.resolve(packageRoot, defaultConfig);
-
-  if (!existsSync(sourcePath)) {
-    throw new Error(`Could not find default config: ${defaultConfig}`);
-  }
+  const sourcePath = resolveDefaultConfigSource(packageRoot, defaultConfig);
 
   copyFileSync(sourcePath, path.join(install.tmpRoot, INSTALLED_EXTENSION_CONFIG_FILE));
   return { requiresConfigEdit: piPackConfig?.["requires-config-edit"] ?? true };
+};
+
+const resolveDefaultConfigSource = (packageRoot: string, defaultConfig: string): string => {
+  const relativeConfig = stripLeadingDotSlash(defaultConfig);
+  assertSafeRelativePath(relativeConfig, "pi-pack.default-config");
+
+  const sourcePath = path.resolve(packageRoot, relativeConfig);
+  if (!existsSync(sourcePath)) throw new Error(`Could not find default config: ${defaultConfig}`);
+
+  assertDefaultConfigIsRegularFile(sourcePath, defaultConfig);
+  assertDefaultConfigIsInsidePackage(packageRoot, sourcePath, defaultConfig);
+  return sourcePath;
+};
+
+const stripLeadingDotSlash = (value: string): string => {
+  if (value.startsWith("./")) return value.slice(2);
+  return value;
+};
+
+const assertDefaultConfigIsRegularFile = (sourcePath: string, defaultConfig: string): void => {
+  if (lstatSync(sourcePath).isSymbolicLink()) {
+    throw new Error(`Default config must be a regular file inside the package: ${defaultConfig}`);
+  }
+  if (statSync(sourcePath).isFile()) return;
+  throw new Error(`Default config must be a regular file inside the package: ${defaultConfig}`);
+};
+
+const assertDefaultConfigIsInsidePackage = (
+  packageRoot: string,
+  sourcePath: string,
+  defaultConfig: string,
+): void => {
+  const relativePath = path.relative(realpathSync(packageRoot), realpathSync(sourcePath));
+  if (relativePath !== "" && !relativePath.startsWith("..") && !path.isAbsolute(relativePath))
+    return;
+  throw new Error(`Default config must be a regular file inside the package: ${defaultConfig}`);
 };
 
 const finalizeInstall = (install: TmpInstall): void => {

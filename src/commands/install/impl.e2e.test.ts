@@ -1,3 +1,4 @@
+import { existsSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { expect, test } from "vite-plus/test";
 import { readJson, writeJson } from "~/lib/json";
@@ -76,6 +77,29 @@ test("pi-pack install hides config edit instructions when the extension does not
       ["Installed pi extension: files", `Location: ${extensionRoot}`, ""].join("\n"),
     );
     expect(readText(extensionRoot, "config.ts")).toBe('export default "files@1.0.0";\n');
+  });
+});
+
+test("pi-pack install does not run package lifecycle scripts", async () => {
+  await withTempDir(async (cwd) => {
+    const agentDir = path.join(cwd, "agent");
+    const source = createExtensionPackage(cwd, "scripts");
+    const scriptOutput = path.join(cwd, "postinstall-ran");
+    const packageJson = readJson<Record<string, unknown>>(path.join(source, "package.json"));
+    writeFileSync(
+      path.join(source, "postinstall.cjs"),
+      `require("node:fs").writeFileSync(${JSON.stringify(scriptOutput)}, "ran");\n`,
+      "utf8",
+    );
+    writeJson(path.join(source, "package.json"), {
+      ...packageJson,
+      scripts: { postinstall: "node postinstall.cjs" },
+    });
+
+    await runInstall(cwd, agentDir, [source]);
+
+    expect(existsSync(scriptOutput)).toBe(false);
+    expectPathExists(agentDir, "extensions/scripts/node_modules/scripts/package.json");
   });
 });
 
@@ -258,5 +282,46 @@ test("pi-pack install fails clearly when default config is missing", async () =>
 
     expect(result.stderr).toContain("Could not find default config");
     expectPathMissing(agentDir, "extensions/missing-config");
+  });
+});
+
+test("pi-pack install rejects default config paths that escape the package", async () => {
+  await withTempDir(async (cwd) => {
+    const agentDir = path.join(cwd, "agent");
+    const source = createExtensionPackage(cwd, "escape-config");
+    const packageJson = readJson<Record<string, Record<string, string>>>(
+      path.join(source, "package.json"),
+    );
+    writeFileSync(path.join(cwd, "secret.ts"), "export default 'secret';\n", "utf8");
+    writeJson(path.join(source, "package.json"), {
+      ...packageJson,
+      "pi-pack": { ...packageJson["pi-pack"], "default-config": "../secret.ts" },
+    });
+
+    const result = await runInstall(cwd, agentDir, [source]);
+
+    expect(result.stderr).toContain(
+      "pi-pack.default-config must be a safe relative path: ../secret.ts.",
+    );
+    expectPathMissing(agentDir, "extensions/escape-config");
+  });
+});
+
+test("pi-pack install rejects symlinked default configs", async () => {
+  await withTempDir(async (cwd) => {
+    const agentDir = path.join(cwd, "agent");
+    const source = createExtensionPackage(cwd, "symlink-config");
+    const defaultConfigPath = path.join(source, "src", "default-config.ts");
+    const secretPath = path.join(cwd, "secret.ts");
+    writeFileSync(secretPath, "export default 'secret';\n", "utf8");
+    rmSync(defaultConfigPath);
+    symlinkSync(secretPath, defaultConfigPath);
+
+    const result = await runInstall(cwd, agentDir, [source]);
+
+    expect(result.stderr).toContain(
+      "Default config must be a regular file inside the package: ./src/default-config.ts",
+    );
+    expectPathMissing(agentDir, "extensions/symlink-config");
   });
 });
