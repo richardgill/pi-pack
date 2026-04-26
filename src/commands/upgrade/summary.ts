@@ -19,14 +19,10 @@ const formatUpgradeResult = (result: UpgradeResult): string =>
   ].join("\n");
 
 const formatDependencyUpgrade = (dependency: DependencyUpgrade): string => {
-  if (dependency.beforeVersion === dependency.afterVersion)
-    return formatDependencyVersion(dependency);
+  if (dependency.beforeVersion === dependency.afterVersion) {
+    return `${dependency.name} ${dependency.afterVersion ?? "unknown"}`;
+  }
   return `${dependency.name} ${dependency.beforeVersion ?? "unknown"} -> ${dependency.afterVersion ?? "unknown"}`;
-};
-
-const formatDependencyVersion = (dependency: DependencyUpgrade): string => {
-  if (dependency.afterVersion === undefined) return `${dependency.name} unknown`;
-  return `${dependency.name} ${dependency.afterVersion}`;
 };
 
 const formatUpgradeFailure = (failure: UpgradeFailure): string =>

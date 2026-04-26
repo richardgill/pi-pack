@@ -1,9 +1,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { readJson } from "~/lib/json";
+import type { ManagedExtension } from "~/lib/managed-extensions";
 import type { PackageJson } from "~/lib/package-json";
 import { runPnpm } from "~/lib/pnpm";
-import type { UpgradeTarget } from "./targets";
 
 export type DependencyUpgrade = {
   name: string;
@@ -11,12 +11,12 @@ export type DependencyUpgrade = {
   afterVersion?: string;
 };
 
-export type UpgradeResult = UpgradeTarget & {
+export type UpgradeResult = ManagedExtension & {
   dependencies: DependencyUpgrade[];
   changed: boolean;
 };
 
-export type UpgradeFailure = UpgradeTarget & {
+export type UpgradeFailure = ManagedExtension & {
   error: unknown;
 };
 
@@ -29,8 +29,8 @@ type UpgradeOptions = {
   bump: boolean;
 };
 
-export const upgradeTargets = async (
-  targets: UpgradeTarget[],
+export const runUpgrades = async (
+  targets: ManagedExtension[],
   options: UpgradeOptions,
 ): Promise<UpgradeBatchResult> => {
   const results: UpgradeResult[] = [];
@@ -48,24 +48,27 @@ export const upgradeTargets = async (
 };
 
 const upgradeTarget = async (
-  target: UpgradeTarget,
+  target: ManagedExtension,
   options: UpgradeOptions,
 ): Promise<UpgradeResult> => {
   const packageNames = readDependencyNames(target.root);
-  const beforeLockfile = readOptionalText(lockfilePath(target.root));
+  if (packageNames.length === 0) {
+    throw new Error(`No dependencies found in ${path.join(target.root, "package.json")}`);
+  }
+
+  const beforeLockfile = readLockfile(target.root);
   const beforeVersions = readDependencyVersions(target.root, packageNames);
 
   await runPnpm({ cwd: target.root, args: createPnpmUpgradeArgs(options) });
 
   const afterVersions = readDependencyVersions(target.root, packageNames);
-  const dependencies = createDependencyUpgrades(packageNames, beforeVersions, afterVersions);
+  const dependencies = diffDependencyVersions(packageNames, beforeVersions, afterVersions);
+  const lockfileChanged = beforeLockfile !== readLockfile(target.root);
 
   return {
     ...target,
     dependencies,
-    changed:
-      hasDependencyChange(dependencies) ||
-      beforeLockfile !== readOptionalText(lockfilePath(target.root)),
+    changed: anyDependencyChanged(dependencies) || lockfileChanged,
   };
 };
 
@@ -76,9 +79,7 @@ const createPnpmUpgradeArgs = (options: UpgradeOptions): string[] => {
 
 const readDependencyNames = (root: string): string[] => {
   const packageJson = readJson<PackageJson>(path.join(root, "package.json"));
-  const packageNames = Object.keys(packageJson.dependencies ?? {});
-  if (packageNames.length > 0) return packageNames;
-  throw new Error(`No dependencies found in ${path.join(root, "package.json")}`);
+  return Object.keys(packageJson.dependencies ?? {});
 };
 
 const readDependencyVersions = (
@@ -98,7 +99,7 @@ const readInstalledPackageVersion = (root: string, packageName: string): string 
   return readJson<PackageJson>(packagePath).version;
 };
 
-const createDependencyUpgrades = (
+const diffDependencyVersions = (
   packageNames: string[],
   beforeVersions: Map<string, string | undefined>,
   afterVersions: Map<string, string | undefined>,
@@ -109,12 +110,11 @@ const createDependencyUpgrades = (
     afterVersion: afterVersions.get(name),
   }));
 
-const hasDependencyChange = (dependencies: DependencyUpgrade[]): boolean =>
+const anyDependencyChanged = (dependencies: DependencyUpgrade[]): boolean =>
   dependencies.some((dependency) => dependency.beforeVersion !== dependency.afterVersion);
 
-const readOptionalText = (filePath: string): string | undefined => {
-  if (!existsSync(filePath)) return undefined;
-  return readFileSync(filePath, "utf8");
+const readLockfile = (root: string): string | undefined => {
+  const lockfilePath = path.join(root, "pnpm-lock.yaml");
+  if (!existsSync(lockfilePath)) return undefined;
+  return readFileSync(lockfilePath, "utf8");
 };
-
-const lockfilePath = (root: string): string => path.join(root, "pnpm-lock.yaml");

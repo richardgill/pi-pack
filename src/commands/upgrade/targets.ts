@@ -1,18 +1,17 @@
-import { listManagedExtensions, resolveManagedExtensions } from "~/lib/managed-extensions";
+import {
+  listManagedExtensions,
+  type ManagedExtension,
+  resolveManagedExtensions,
+} from "~/lib/managed-extensions";
 import { resolvePiExtensionsDir } from "~/lib/pi";
 
-export type UpgradeTarget = {
-  extensionName: string;
-  root: string;
-};
-
-export const resolveUpgradeTargets = (extensionNames: string[]): UpgradeTarget[] => {
-  const targets = readUpgradeTargets(extensionNames);
-  if (targets.length > 0) return targets;
-  throw new Error(`No installed extensions found at ${resolvePiExtensionsDir()}`);
-};
-
-const readUpgradeTargets = (extensionNames: string[]): UpgradeTarget[] => {
-  if (extensionNames.length === 0) return listManagedExtensions();
-  return resolveManagedExtensions(extensionNames);
+export const resolveUpgradeTargets = (extensionNames: string[]): ManagedExtension[] => {
+  const targets =
+    extensionNames.length === 0
+      ? listManagedExtensions()
+      : resolveManagedExtensions(extensionNames);
+  if (targets.length === 0) {
+    throw new Error(`No installed extensions found at ${resolvePiExtensionsDir()}`);
+  }
+  return targets;
 };
