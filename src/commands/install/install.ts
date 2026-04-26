@@ -139,11 +139,9 @@ const stripLeadingDotSlash = (value: string): string => {
 };
 
 const assertDefaultConfigIsRegularFile = (sourcePath: string, defaultConfig: string): void => {
-  if (lstatSync(sourcePath).isSymbolicLink()) {
+  if (lstatSync(sourcePath).isSymbolicLink() || !statSync(sourcePath).isFile()) {
     throw new Error(`Default config must be a regular file inside the package: ${defaultConfig}`);
   }
-  if (statSync(sourcePath).isFile()) return;
-  throw new Error(`Default config must be a regular file inside the package: ${defaultConfig}`);
 };
 
 const assertDefaultConfigIsInsidePackage = (
@@ -152,9 +150,9 @@ const assertDefaultConfigIsInsidePackage = (
   defaultConfig: string,
 ): void => {
   const relativePath = path.relative(realpathSync(packageRoot), realpathSync(sourcePath));
-  if (relativePath !== "" && !relativePath.startsWith("..") && !path.isAbsolute(relativePath))
-    return;
-  throw new Error(`Default config must be a regular file inside the package: ${defaultConfig}`);
+  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+    throw new Error(`Default config must be a regular file inside the package: ${defaultConfig}`);
+  }
 };
 
 const moveTmpInstallIntoPlace = (install: TmpInstall): void => {
