@@ -36,49 +36,83 @@ export type InstallResult = {
   requiresConfigEdit: boolean;
 };
 
+type InstalledPackage = {
+  packageRoot: string;
+  piPackConfig: PiPackPackageJson["pi-pack"];
+};
+
 const DEFAULT_CONFIG_PATH = "./src/default-config.ts";
 
 export const installExtension = async (install: ResolvedInstall): Promise<InstallResult> => {
-  assertCanInstall(install);
+  assertInstallDirDoesNotExist(install);
 
-  const tmpInstall = createTmpInstall(install);
-  try {
+  // Install into ~/.pi/agent/extensions/.pi-pack-install-* first.
+  // On success, move it to the final extension directory; on failure, clean it up.
+  return withTmpInstall(install.piExtensionsDir, async (tmpRoot) => {
+    const tmpInstall = { ...install, tmpRoot };
+    writeJson(path.join(tmpInstall.tmpRoot, "package.json"), INSTALLED_EXTENSION_PACKAGE_JSON);
     await pnpmAdd(tmpInstall.tmpRoot, tmpInstall.pnpmDependency);
-    const result = copyDefaultConfigToInstalledConfig(tmpInstall);
-    finalizeInstall(tmpInstall);
-    return result;
-  } finally {
-    cleanupTmpInstall(tmpInstall);
-  }
+    const installedPackage = readInstalledPackage(tmpInstall);
+    installDefaultConfig(tmpInstall, installedPackage);
+    moveTmpInstallIntoPlace(tmpInstall);
+    return {
+      requiresConfigEdit: installedPackage.piPackConfig?.["requires-config-edit"] ?? true,
+    };
+  });
 };
 
-const assertCanInstall = (install: ResolvedInstall): void => {
+const assertInstallDirDoesNotExist = (install: ResolvedInstall): void => {
   const installDirExists = existsSync(install.absInstallDir);
-  const installDirHasFiles = readdirSync(install.absInstallDir).length > 0;
+  const installDirHasFiles = installDirExists && readdirSync(install.absInstallDir).length > 0;
 
-  if (installDirExists || installDirHasFiles) {
+  if (installDirHasFiles) {
     throw new Error(
       `Extension already exists: ${install.absInstallDir}. Delete it manually first.`,
     );
   }
 };
 
-const createTmpInstall = (install: ResolvedInstall): TmpInstall => {
-  mkdirSync(install.piExtensionsDir, { recursive: true });
-  const tmpRoot = mkdtempSync(path.join(install.piExtensionsDir, ".pi-pack-install-"));
-  writeJson(path.join(tmpRoot, "package.json"), INSTALLED_EXTENSION_PACKAGE_JSON);
-  return { ...install, tmpRoot };
+const withTmpInstall = async <T>(
+  piExtensionsDir: string,
+  callback: (tmpRoot: string) => Promise<T>,
+): Promise<T> => {
+  mkdirSync(piExtensionsDir, { recursive: true });
+  const tmpRoot = mkdtempSync(path.join(piExtensionsDir, ".pi-pack-install-"));
+
+  try {
+    return await callback(tmpRoot);
+  } finally {
+    rmSync(tmpRoot, { recursive: true, force: true });
+  }
 };
 
-const copyDefaultConfigToInstalledConfig = (install: TmpInstall): InstallResult => {
-  const packageRoot = path.join(install.tmpRoot, "node_modules", install.packageName);
+const readInstalledPackage = (install: TmpInstall): InstalledPackage => {
+  const packageRoot = getInstalledPackageRoot(install);
   const packageJson = readJson<PiPackPackageJson>(path.join(packageRoot, "package.json"));
-  const piPackConfig = packageJson["pi-pack"];
-  const defaultConfig = piPackConfig?.["default-config"] ?? DEFAULT_CONFIG_PATH;
-  const sourcePath = resolveDefaultConfigSource(packageRoot, defaultConfig);
 
-  copyFileSync(sourcePath, path.join(install.tmpRoot, INSTALLED_EXTENSION_CONFIG_FILE));
-  return { requiresConfigEdit: piPackConfig?.["requires-config-edit"] ?? true };
+  return { packageRoot, piPackConfig: packageJson["pi-pack"] };
+};
+
+const getInstalledPackageRoot = (install: TmpInstall): string => {
+  return path.join(install.tmpRoot, "node_modules", install.packageName);
+};
+
+const installDefaultConfig = (install: TmpInstall, installedPackage: InstalledPackage): void => {
+  const defaultConfig = getDefaultConfigPath(installedPackage.piPackConfig);
+  const defaultConfigSourcePath = resolveDefaultConfigSource(
+    installedPackage.packageRoot,
+    defaultConfig,
+  );
+
+  copyFileSync(defaultConfigSourcePath, getInstalledConfigPath(install));
+};
+
+const getDefaultConfigPath = (piPackConfig: PiPackPackageJson["pi-pack"]): string => {
+  return piPackConfig?.["default-config"] ?? DEFAULT_CONFIG_PATH;
+};
+
+const getInstalledConfigPath = (install: TmpInstall): string => {
+  return path.join(install.tmpRoot, INSTALLED_EXTENSION_CONFIG_FILE);
 };
 
 const resolveDefaultConfigSource = (packageRoot: string, defaultConfig: string): string => {
@@ -117,11 +151,7 @@ const assertDefaultConfigIsInsidePackage = (
   throw new Error(`Default config must be a regular file inside the package: ${defaultConfig}`);
 };
 
-const finalizeInstall = (install: TmpInstall): void => {
+const moveTmpInstallIntoPlace = (install: TmpInstall): void => {
   mkdirSync(path.dirname(install.absInstallDir), { recursive: true });
   renameSync(install.tmpRoot, install.absInstallDir);
-};
-
-const cleanupTmpInstall = (install: TmpInstall): void => {
-  rmSync(install.tmpRoot, { recursive: true, force: true });
 };
