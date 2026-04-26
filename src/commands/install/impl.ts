@@ -2,10 +2,10 @@ import path from "node:path";
 import type { LocalContext } from "~/context";
 import type { VerboseFlags } from "~/lib/flags";
 import { INSTALLED_EXTENSION_CONFIG_FILE } from "~/lib/package-json";
+import { toPnpmDependency } from "~/lib/install-source";
 import { assertSafeExtensionName, resolvePiExtensionsDir } from "~/lib/pi";
 import { inferPackageName } from "~/lib/pnpm";
 import { installExtension, type InstallResult, type ResolvedInstall } from "./install";
-import { toPnpmDependency } from "./sources";
 
 export type InstallFlags = VerboseFlags & {
   extension?: string;

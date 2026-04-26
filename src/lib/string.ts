@@ -13,3 +13,5 @@ const words = (value: string): string[] => Array.from(value.match(CASE_SPLIT_PAT
 // https://github.com/toss/es-toolkit/blob/main/src/string/capitalize.ts
 export const capitalize = (value: string): string =>
   value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+
+export const isString = (value: string | undefined): value is string => value !== undefined;

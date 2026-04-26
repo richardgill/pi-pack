@@ -5,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { runCommand } from "~/lib/command";
 import { readRequiredPiPackExtensionsDir } from "~/lib/package-config";
 import { assertSafeExtensionName } from "~/lib/pi";
+import { isString } from "~/lib/string";
 
 export const toPnpmDependency = async (
   cwd: string,
@@ -130,5 +131,3 @@ const isPathSource = (source: string): boolean =>
   path.isAbsolute(source);
 
 const isHomePathSource = (source: string): boolean => source === "~" || source.startsWith("~/");
-
-const isString = (value: string | undefined): value is string => value !== undefined;
