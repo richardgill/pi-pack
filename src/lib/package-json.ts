@@ -19,6 +19,7 @@ export type PackageJson = {
   exports?: PackageJsonExports;
   keywords?: string[];
   dependencies?: PackageJsonDependency;
+  bin?: string | Partial<Record<string, string>>;
 };
 
 export type PiPackPackageConfig = {

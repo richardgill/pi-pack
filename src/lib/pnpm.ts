@@ -6,10 +6,6 @@ import { runCommand } from "~/lib/command";
 import { readJson, writeJson } from "~/lib/json";
 import { INSTALLED_EXTENSION_PACKAGE_JSON, type PackageJson } from "~/lib/package-json";
 
-type PackageJsonWithBin = {
-  bin?: string | Record<string, string>;
-};
-
 type RunPnpmOptions = {
   cwd: string;
   args: string[];
@@ -39,7 +35,7 @@ export const runPnpm = async ({ cwd, args }: RunPnpmOptions): Promise<void> => {
   await runCommand(process.execPath, [resolvePnpmBin(), ...args], cwd);
 };
 
-const getPnpmBin = (packageJson: PackageJsonWithBin): string => {
+const getPnpmBin = (packageJson: PackageJson): string => {
   if (typeof packageJson.bin === "string") return packageJson.bin;
   const pnpmBin = packageJson.bin?.["pnpm"];
   if (pnpmBin) return pnpmBin;
@@ -58,8 +54,8 @@ const pnpmAddLockfileOnly = async (cwd: string, source: string): Promise<void> =
   await runPnpm({ cwd, args: ["add", "--lockfile-only", source] });
 };
 
-const readPackageJson = (packagePath: string): PackageJsonWithBin =>
-  JSON.parse(readFileSync(packagePath, "utf8")) as PackageJsonWithBin;
+const readPackageJson = (packagePath: string): PackageJson =>
+  JSON.parse(readFileSync(packagePath, "utf8")) as PackageJson;
 
 const readSingleDependencyName = (packagePath: string): string => {
   const packageJson = readJson<PackageJson>(packagePath);
