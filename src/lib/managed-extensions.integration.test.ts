@@ -7,7 +7,7 @@ import { withTempDir } from "~/testing/temp-dir";
 import { listManagedExtensions, resolveManagedExtensions } from "./managed-extensions";
 
 test("listManagedExtensions returns managed extension directories sorted by name", async () => {
-  await withTempDir(async (agentDir) => {
+  await withTempDir(async ({ cwd: agentDir }) => {
     const extensionsRoot = path.join(agentDir, "extensions");
     writeManagedPackageJson(extensionsRoot, "zeta");
     writeManagedPackageJson(extensionsRoot, "alpha");
@@ -25,7 +25,7 @@ test("listManagedExtensions returns managed extension directories sorted by name
 });
 
 test("listManagedExtensions returns an empty array when no managed extensions are installed", async () => {
-  await withTempDir(async (agentDir) => {
+  await withTempDir(async ({ cwd: agentDir }) => {
     const extensionsRoot = path.join(agentDir, "extensions");
     mkdirSync(extensionsRoot, { recursive: true });
     writePackageJson(extensionsRoot, "unmanaged", { name: "unmanaged" });
@@ -38,7 +38,7 @@ test("listManagedExtensions returns an empty array when no managed extensions ar
 });
 
 test("resolveManagedExtensions resolves managed names and rejects missing or unmanaged names", async () => {
-  await withTempDir(async (agentDir) => {
+  await withTempDir(async ({ cwd: agentDir }) => {
     const extensionsRoot = path.join(agentDir, "extensions");
     writeManagedPackageJson(extensionsRoot, "alpha");
     writePackageJson(extensionsRoot, "unmanaged", { name: "unmanaged" });

@@ -135,7 +135,7 @@ const packRegistryVersion = (
 });
 
 test("pi-pack upgrade extension-name upgrades the installed dependency", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const packageRoot = createExtensionPackage(cwd, "files", "1.0.0");
     const source = packExtensionPackage(packageRoot, cwd);
@@ -152,7 +152,7 @@ test("pi-pack upgrade extension-name upgrades the installed dependency", async (
 });
 
 test("pi-pack upgrade --bump upgrades to latest and rewrites dependency range", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const packageRoot = createExtensionPackage(cwd, "files", "1.0.0");
     const first = packRegistryVersion(packageRoot, cwd, "1.0.0");
@@ -177,7 +177,7 @@ test("pi-pack upgrade --bump upgrades to latest and rewrites dependency range", 
 });
 
 test("pi-pack upgrade selected extension names", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const filesRoot = createExtensionPackage(cwd, "files", "1.0.0");
     const tasksRoot = createExtensionPackage(cwd, "tasks", "1.0.0");
@@ -198,7 +198,7 @@ test("pi-pack upgrade selected extension names", async () => {
 });
 
 test("pi-pack upgrade preserves the user's config.ts", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const packageRoot = createExtensionPackage(cwd, "files", "1.0.0");
     const source = packExtensionPackage(packageRoot, cwd);
@@ -217,7 +217,7 @@ test("pi-pack upgrade preserves the user's config.ts", async () => {
 });
 
 test("pi-pack upgrade upgrades all installed extensions", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const filesRoot = createExtensionPackage(cwd, "files", "1.0.0");
     const tasksRoot = createExtensionPackage(cwd, "tasks", "1.0.0");
@@ -244,7 +244,7 @@ test("pi-pack upgrade upgrades all installed extensions", async () => {
 });
 
 test("pi-pack upgrade reports successes and failures", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const packageRoot = createExtensionPackage(cwd, "files", "1.0.0");
     const source = packExtensionPackage(packageRoot, cwd);
@@ -269,7 +269,7 @@ test("pi-pack upgrade reports successes and failures", async () => {
 });
 
 test("pi-pack upgrade skips extensions not managed by pi-pack", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const packageRoot = createExtensionPackage(cwd, "files", "1.0.0");
     const source = packExtensionPackage(packageRoot, cwd);
@@ -293,7 +293,7 @@ test("pi-pack upgrade skips extensions not managed by pi-pack", async () => {
 });
 
 test("pi-pack upgrade errors when no extensions are installed", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
 
     const result = await runUpgrade(cwd, agentDir, []);
@@ -303,7 +303,7 @@ test("pi-pack upgrade errors when no extensions are installed", async () => {
 });
 
 test("pi-pack upgrade rejects unmanaged extension names", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const unmanagedRoot = path.join(agentDir, "extensions", "skill-task");
     mkdirSync(unmanagedRoot, { recursive: true });
@@ -320,7 +320,7 @@ test("pi-pack upgrade rejects unmanaged extension names", async () => {
 });
 
 test("pi-pack upgrade rejects unsafe extension names", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
 
     const result = await runUpgrade(cwd, agentDir, ["../outside"]);

@@ -16,7 +16,7 @@ const runInstall = async (cwd: string, agentDir: string, args: string[]) =>
   runPiPack(cwd, agentDir, ["install", ...args]);
 
 test("pi-pack install installs a local package into pi's extensions dir", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createExtensionPackage(cwd, "files");
 
@@ -47,7 +47,7 @@ test("pi-pack install installs a local package into pi's extensions dir", async 
 });
 
 test("pi-pack install hides config edit instructions when the extension does not require edits", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createExtensionPackage(cwd, "files", "1.0.0", false);
 
@@ -62,7 +62,7 @@ test("pi-pack install hides config edit instructions when the extension does not
 });
 
 test("pi-pack install does not run package lifecycle scripts", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createExtensionPackage(cwd, "scripts");
     const scriptOutput = path.join(cwd, "postinstall-ran");
@@ -85,7 +85,7 @@ test("pi-pack install does not run package lifecycle scripts", async () => {
 });
 
 test("pi-pack install --as installs under a custom extension name", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createExtensionPackage(cwd, "files");
 
@@ -99,7 +99,7 @@ test("pi-pack install --as installs under a custom extension name", async () => 
 });
 
 test("pi-pack install --extension installs a package from a configured monorepo", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const repoRoot = path.join(cwd, "repo");
     writeJson(path.join(repoRoot, "package.json"), {
@@ -116,7 +116,7 @@ test("pi-pack install --extension installs a package from a configured monorepo"
 });
 
 test("pi-pack install --extension rejects configured folders that escape the source root", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const repoRoot = path.join(cwd, "repo");
     writeJson(path.join(repoRoot, "package.json"), {
@@ -134,7 +134,7 @@ test("pi-pack install --extension rejects configured folders that escape the sou
 });
 
 test("pi-pack install resolves relative file sources against the command cwd", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     createExtensionPackage(cwd, "files");
 
@@ -147,7 +147,7 @@ test("pi-pack install resolves relative file sources against the command cwd", a
 });
 
 test("pi-pack install expands home-relative filesystem sources", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const homeDir = path.join(cwd, "home");
     const agentDir = path.join(cwd, "agent");
     createExtensionPackage(path.join(homeDir, "code"), "files");
@@ -163,7 +163,7 @@ test("pi-pack install expands home-relative filesystem sources", async () => {
 });
 
 test("pi-pack install --extension resolves relative file sources against the command cwd", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     writeJson(path.join(cwd, "repo", "package.json"), {
       "pi-pack": { "extensions-folder": "extensions" },
@@ -179,7 +179,7 @@ test("pi-pack install --extension resolves relative file sources against the com
 });
 
 test("pi-pack install --extension requires a configured extensions folder", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     writeJson(path.join(cwd, "repo", "package.json"), {});
     createExtensionPackage(path.join(cwd, "repo", "extensions"), "files");
@@ -192,7 +192,7 @@ test("pi-pack install --extension requires a configured extensions folder", asyn
 });
 
 test("pi-pack install --extension rejects path-like extension names", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const repoRoot = path.join(cwd, "repo");
     writeJson(path.join(repoRoot, "package.json"), {
@@ -208,7 +208,7 @@ test("pi-pack install --extension rejects path-like extension names", async () =
 });
 
 test("pi-pack install --extension rejects sources without extension name support", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
 
     const npmResult = await runInstall(cwd, agentDir, ["npm:files", "--extension", "files"]);
@@ -224,7 +224,7 @@ test("pi-pack install --extension rejects sources without extension name support
 });
 
 test("pi-pack install rejects package names that are unsafe extension names", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createExtensionPackage(cwd, "@rich/files");
 
@@ -239,7 +239,7 @@ test("pi-pack install rejects package names that are unsafe extension names", as
 });
 
 test("pi-pack install refuses to overwrite an existing extension", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createExtensionPackage(cwd, "files");
 
@@ -257,7 +257,7 @@ test("pi-pack install refuses to overwrite an existing extension", async () => {
 });
 
 test("pi-pack install --verbose shows stack traces for command failures", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createExtensionPackage(cwd, "files");
 
@@ -271,7 +271,7 @@ test("pi-pack install --verbose shows stack traces for command failures", async 
 });
 
 test("pi-pack install fails clearly when default config is missing", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createPackageWithoutDefaultConfig(cwd, "missing-config");
 
@@ -283,7 +283,7 @@ test("pi-pack install fails clearly when default config is missing", async () =>
 });
 
 test("pi-pack install rejects default config paths that escape the package", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createExtensionPackage(cwd, "escape-config");
     const packageJson = readJson<Record<string, Record<string, string>>>(
@@ -305,7 +305,7 @@ test("pi-pack install rejects default config paths that escape the package", asy
 });
 
 test("pi-pack install rejects symlinked default configs", async () => {
-  await withTempDir(async (cwd) => {
+  await withTempDir(async ({ cwd }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createExtensionPackage(cwd, "symlink-config");
     const defaultConfigPath = path.join(source, "src", "default-config.ts");

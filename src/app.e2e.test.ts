@@ -1,7 +1,5 @@
 import { readFileSync } from "node:fs";
-import path from "node:path";
 import { expect, test } from "vite-plus/test";
-import { runPiPack } from "~/testing/pi-pack";
 import { withTempDir } from "~/testing/temp-dir";
 
 const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
@@ -32,10 +30,9 @@ COMMANDS
 `;
 
 test("pi-pack prints help", async () => {
-  await withTempDir(async (cwd) => {
-    const agentDir = path.join(cwd, "agent");
-    const result = await runPiPack(cwd, agentDir, []);
-    const helpResult = await runPiPack(cwd, agentDir, ["--help"]);
+  await withTempDir(async ({ run }) => {
+    const result = await run("pi-pack");
+    const helpResult = await run("pi-pack --help");
 
     expect(result.stderr).toBe("");
     expect(helpResult.stderr).toBe("");
@@ -45,8 +42,8 @@ test("pi-pack prints help", async () => {
 });
 
 test("pi-pack --version prints the package version in dev", async () => {
-  await withTempDir(async (cwd) => {
-    const result = await runPiPack(cwd, path.join(cwd, "agent"), ["--version"]);
+  await withTempDir(async ({ run }) => {
+    const result = await run("pi-pack --version");
 
     expect(result.stdout.trim()).toBe(packageJson.version);
   });

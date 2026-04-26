@@ -1,3 +1,4 @@
+import path from "node:path";
 import { Writable } from "node:stream";
 import { run } from "@stricli/core";
 import { app } from "~/app";
@@ -11,11 +12,40 @@ export type RunResult = {
   stderr: string;
 };
 
+export type RunPiPackCommandOptions = {
+  agentDir?: string;
+  promptHandler?: PromptHandler;
+};
+
+export type RunPiPackCommand = (
+  command: `pi-pack${string}`,
+  options?: RunPiPackCommandOptions,
+) => Promise<RunResult>;
+
 type CapturedOutput = {
   stdout: Writable;
   stderr: Writable;
   readStdout: () => string;
   readStderr: () => string;
+};
+
+export const createPiPackTestRunner = (cwd: string): RunPiPackCommand => {
+  const defaultAgentDir = path.join(cwd, "agent");
+
+  return (command, options) =>
+    runPiPack(
+      cwd,
+      options?.agentDir ?? defaultAgentDir,
+      parsePiPackCommand(command),
+      options?.promptHandler,
+    );
+};
+
+export const parsePiPackCommand = (command: string): string[] => {
+  const [binary, ...args] = command.trim().split(/\s+/);
+
+  if (binary !== "pi-pack") throw new Error(`Expected pi-pack command, got: ${command}`);
+  return args;
 };
 
 export const runPiPack = async (
