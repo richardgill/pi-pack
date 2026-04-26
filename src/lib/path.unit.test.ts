@@ -118,12 +118,12 @@ segmentCases.forEach(({ name, input, expected }) => {
 
 const relativePathCases: TestCase[] = [
   {
-    name: "accepts single nested folder",
+    name: "accepts single nested dir",
     input: "extensions",
     expected: { ok: true },
   },
   {
-    name: "accepts nested folders",
+    name: "accepts nested dirs",
     input: "packages/extensions",
     expected: { ok: true },
   },
@@ -132,7 +132,7 @@ const relativePathCases: TestCase[] = [
     input: "../extensions",
     expected: {
       ok: false,
-      error: "Extensions folder must be a safe relative path: ../extensions.",
+      error: "Extensions dir must be a safe relative path: ../extensions.",
     },
   },
   {
@@ -140,7 +140,7 @@ const relativePathCases: TestCase[] = [
     input: "/tmp/extensions",
     expected: {
       ok: false,
-      error: "Extensions folder must be a safe relative path: /tmp/extensions.",
+      error: "Extensions dir must be a safe relative path: /tmp/extensions.",
     },
   },
   {
@@ -148,7 +148,7 @@ const relativePathCases: TestCase[] = [
     input: "packages/../extensions",
     expected: {
       ok: false,
-      error: "Extensions folder must be a safe relative path: packages/../extensions.",
+      error: "Extensions dir must be a safe relative path: packages/../extensions.",
     },
   },
   {
@@ -156,7 +156,7 @@ const relativePathCases: TestCase[] = [
     input: "packages/NUL/config.json",
     expected: {
       ok: false,
-      error: "Extensions folder must be a safe relative path: packages/NUL/config.json.",
+      error: "Extensions dir must be a safe relative path: packages/NUL/config.json.",
     },
   },
   {
@@ -164,7 +164,7 @@ const relativePathCases: TestCase[] = [
     input: "packages/C:/config.json",
     expected: {
       ok: false,
-      error: "Extensions folder must be a safe relative path: packages/C:/config.json.",
+      error: "Extensions dir must be a safe relative path: packages/C:/config.json.",
     },
   },
 ];
@@ -172,9 +172,9 @@ const relativePathCases: TestCase[] = [
 relativePathCases.forEach(({ name, input, expected }) => {
   test(`assertSafeRelativePath ${name}`, () => {
     if (expected.ok) {
-      expect(() => assertSafeRelativePath(input, "Extensions folder")).not.toThrow();
+      expect(() => assertSafeRelativePath(input, "Extensions dir")).not.toThrow();
     } else {
-      expect(() => assertSafeRelativePath(input, "Extensions folder")).toThrow(expected.error);
+      expect(() => assertSafeRelativePath(input, "Extensions dir")).toThrow(expected.error);
     }
   });
 });

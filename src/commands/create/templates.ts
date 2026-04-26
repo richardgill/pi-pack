@@ -3,12 +3,12 @@ import { toPascalCase } from "~/lib/string";
 
 export const monorepoRootPackageJson = (
   name: string,
-  extensionsFolder: string,
+  extensionsDir: string,
 ): PiPackPackageJson => ({
   name,
   private: true,
   "pi-pack": {
-    "extensions-folder": extensionsFolder,
+    "extensions-dir": extensionsDir,
   },
 });
 
@@ -59,7 +59,7 @@ export default extension({
 
 export const monorepoReadme = (
   name: string,
-  extensionsFolder: string,
+  extensionsDir: string,
   extensionName = "<extension-name>",
 ): string => `# ${name}
 
@@ -67,7 +67,7 @@ export const monorepoReadme = (
 
 ## Extensions
 
-- [\`${extensionName}\`](./${extensionsFolder}/${extensionName}/README.md)
+- [\`${extensionName}\`](./${extensionsDir}/${extensionName}/README.md)
 
 ## Install with pi-pack
 

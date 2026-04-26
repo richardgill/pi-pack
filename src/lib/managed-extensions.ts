@@ -3,7 +3,7 @@ import type { Dirent } from "node:fs";
 import path from "node:path";
 import { readJson } from "~/lib/json";
 import type { PiPackPackageJson } from "~/lib/package-json";
-import { resolveExtensionFolder, resolvePiExtensionsFolder } from "~/lib/pi";
+import { resolveExtensionDir, resolvePiExtensionsDir } from "~/lib/pi";
 
 // pi extensions are "managed" by pi-pack if their package.json has:
 // { "pi-pack": { "managed": true } }
@@ -14,7 +14,7 @@ export type ManagedExtension = {
 };
 
 export const listManagedExtensions = (): ManagedExtension[] => {
-  const extensionsRoot = resolvePiExtensionsFolder();
+  const extensionsRoot = resolvePiExtensionsDir();
   if (!existsSync(extensionsRoot)) return [];
 
   return readdirSync(extensionsRoot, { withFileTypes: true })
@@ -40,7 +40,7 @@ const isManagedExtensionRoot = (root: string): boolean => {
 };
 
 const resolveManagedExtension = (extensionName: string): ManagedExtension =>
-  toManagedExtension(extensionName, resolveExtensionFolder(extensionName));
+  toManagedExtension(extensionName, resolveExtensionDir(extensionName));
 
 const toManagedExtension = (extensionName: string, root: string): ManagedExtension => {
   assertManagedExtensionRoot(root);

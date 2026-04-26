@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { runCommand } from "~/lib/command";
-import { readRequiredPiPackExtensionsFolder } from "~/lib/package-config";
+import { readRequiredPiPackExtensionsDir } from "~/lib/package-config";
 import { assertSafeExtensionName } from "~/lib/pi";
 
 export const toPnpmDependency = async (
@@ -36,25 +36,25 @@ const resolveExtensionPackagePath = async (
   if (extensionName === undefined) return undefined;
   assertSafeExtensionName(extensionName);
 
-  const extensionsFolder = await readExtensionsFolder(cwd, source);
-  return path.posix.join(extensionsFolder, extensionName);
+  const extensionsDir = await readExtensionsDir(cwd, source);
+  return path.posix.join(extensionsDir, extensionName);
 };
 
-const readExtensionsFolder = async (cwd: string, source: string): Promise<string> => {
-  if (source.startsWith("git:")) return readGitExtensionsFolder(source.slice("git:".length));
-  return readLocalExtensionsFolder(resolveLocalSourceRoot(cwd, source));
+const readExtensionsDir = async (cwd: string, source: string): Promise<string> => {
+  if (source.startsWith("git:")) return readGitExtensionsDir(source.slice("git:".length));
+  return readLocalExtensionsDir(resolveLocalSourceRoot(cwd, source));
 };
 
-const readLocalExtensionsFolder = (repoRoot: string): string =>
-  readRequiredPiPackExtensionsFolder(path.join(repoRoot, "package.json"));
+const readLocalExtensionsDir = (repoRoot: string): string =>
+  readRequiredPiPackExtensionsDir(path.join(repoRoot, "package.json"));
 
-const readGitExtensionsFolder = async (source: string): Promise<string> => {
+const readGitExtensionsDir = async (source: string): Promise<string> => {
   const parsed = parseGitSource(source);
   const tempRoot = mkdtempSync(path.join(os.tmpdir(), "pi-pack-repo-"));
 
   try {
     await checkoutGitPackageJson(tempRoot, parsed);
-    return readRequiredPiPackExtensionsFolder(path.join(tempRoot, "package.json"));
+    return readRequiredPiPackExtensionsDir(path.join(tempRoot, "package.json"));
   } finally {
     rmSync(tempRoot, { recursive: true, force: true });
   }

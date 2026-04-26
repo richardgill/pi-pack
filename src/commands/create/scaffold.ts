@@ -21,27 +21,27 @@ type ExtensionReadmeContext =
 export const createMono = ({
   cwd,
   repoName,
-  extensionsFolder,
+  extensionsDir,
   firstExtensionName,
 }: {
   cwd: string;
   repoName: string;
-  extensionsFolder: string;
+  extensionsDir: string;
   firstExtensionName?: string;
 }): void => {
   assertSafePathSegment(repoName, "Repo name");
-  assertSafeRelativePath(extensionsFolder, "Extensions folder");
+  assertSafeRelativePath(extensionsDir, "Extensions dir");
 
   const monorepoRoot = path.join(cwd, repoName);
   assertDirEmpty(monorepoRoot);
-  mkdirSync(path.join(monorepoRoot, extensionsFolder), { recursive: true });
+  mkdirSync(path.join(monorepoRoot, extensionsDir), { recursive: true });
   writeJson(
     path.join(monorepoRoot, "package.json"),
-    monorepoRootPackageJson(repoName, extensionsFolder),
+    monorepoRootPackageJson(repoName, extensionsDir),
   );
   writeFileSync(
     path.join(monorepoRoot, "README.md"),
-    monorepoReadme(repoName, extensionsFolder, firstExtensionName),
+    monorepoReadme(repoName, extensionsDir, firstExtensionName),
     "utf8",
   );
 };
@@ -66,8 +66,8 @@ const writeExtensionFiles = (
   name: string,
   readmeContext: ExtensionReadmeContext,
 ): void => {
-  const srcFolder = path.join(extensionRoot, "src");
-  mkdirSync(srcFolder, { recursive: true });
+  const srcDir = path.join(extensionRoot, "src");
+  mkdirSync(srcDir, { recursive: true });
   writeJson(path.join(extensionRoot, "package.json"), extensionPackageJson(name));
   writeFileSync(
     path.join(extensionRoot, "README.md"),
@@ -75,7 +75,7 @@ const writeExtensionFiles = (
     "utf8",
   );
   writeFileSync(path.join(extensionRoot, "tsconfig.json"), tsconfig(), "utf8");
-  writeFileSync(path.join(srcFolder, "extension.ts"), indexDotTs(name), "utf8");
+  writeFileSync(path.join(srcDir, "extension.ts"), indexDotTs(name), "utf8");
   writeFileSync(
     path.join(extensionRoot, "src", "default-config.ts"),
     defaultConfigSource(name),

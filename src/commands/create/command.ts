@@ -11,7 +11,7 @@ export const createCommand = buildCommand<CreateFlags, CreateArgs, LocalContext>
     flags: {
       monoDir: {
         kind: "parsed",
-        brief: "Set the monorepo extensions folder",
+        brief: "Set the monorepo extensions dir",
         parse: stringParser,
         optional: true,
       },

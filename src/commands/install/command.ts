@@ -17,8 +17,8 @@ export const installCommand = buildCommand<InstallFlags, InstallArgs, LocalConte
       },
       as: {
         kind: "parsed",
-        brief: "Install under a custom extension folder",
-        placeholder: "extension-folder",
+        brief: "Install under a custom extension dir",
+        placeholder: "extension-dir",
         parse: stringParser,
         optional: true,
       },

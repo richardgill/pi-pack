@@ -4,7 +4,7 @@ import type { VerboseFlags } from "~/lib/flags";
 import { assertSafeRelativePath, assertSafePathSegment } from "~/lib/path";
 import {
   readPackageNameFromPackageRoot,
-  readPiPackExtensionsFolderFromPackageRoot,
+  readPiPackExtensionsDirFromPackageRoot,
 } from "~/lib/package-config";
 import { assertSafeExtensionName } from "~/lib/pi";
 import { createPrompts, maybeCreatePrompts } from "~/lib/prompts";
@@ -30,7 +30,7 @@ type ExtensionCreateMode =
 
 type Prompts = ReturnType<typeof createPrompts>;
 
-const DEFAULT_EXTENSIONS_FOLDER = "extensions";
+const DEFAULT_EXTENSIONS_DIR = "extensions";
 const DEFAULT_EXTENSION_NAME_PREFIX = "pi-";
 
 export const runCreate = async (
@@ -56,9 +56,9 @@ const runCreateMonorepo = async (
   if (repoName === undefined) return;
   assertSafePathSegment(repoName, "Repo name");
 
-  const extensionsFolder = await readExtensionsFolder(prompts, flags);
-  if (extensionsFolder === undefined) return;
-  assertSafeRelativePath(extensionsFolder, "Extensions folder");
+  const extensionsDir = await readExtensionsDir(prompts, flags);
+  if (extensionsDir === undefined) return;
+  assertSafeRelativePath(extensionsDir, "Extensions dir");
 
   const firstExtensionName = await readFirstMonorepoExtensionName(prompts);
   if (prompts !== undefined && firstExtensionName === undefined) return;
@@ -68,12 +68,12 @@ const runCreateMonorepo = async (
   createMono({
     cwd: context.cwd,
     repoName,
-    extensionsFolder,
+    extensionsDir,
     firstExtensionName,
   });
   const firstExtensionRoot = createFirstMonorepoExtensionRoot(
     monoRoot,
-    extensionsFolder,
+    extensionsDir,
     firstExtensionName,
   );
   writeMonorepoCreateResult(context, monoRoot, firstExtensionRoot);
@@ -107,8 +107,7 @@ const readMonorepoMode = async (
   name?: string,
 ): Promise<boolean | undefined> => {
   if (flags.mono === true || flags.monoDir !== undefined) return true;
-  if (name !== undefined || readPiPackExtensionsFolderFromPackageRoot(cwd) !== undefined)
-    return false;
+  if (name !== undefined || readPiPackExtensionsDirFromPackageRoot(cwd) !== undefined) return false;
   if (prompts === undefined)
     throw new Error("Usage: pi-pack create <name> or pi-pack create --mono <repo>");
 
@@ -148,20 +147,20 @@ const readExtensionName = async (
   return extensionName;
 };
 
-const readExtensionsFolder = async (
+const readExtensionsDir = async (
   prompts: Prompts | undefined,
   flags: CreateFlags,
 ): Promise<string | undefined> => {
   if (flags.monoDir !== undefined) return flags.monoDir;
-  if (prompts === undefined) return DEFAULT_EXTENSIONS_FOLDER;
+  if (prompts === undefined) return DEFAULT_EXTENSIONS_DIR;
 
-  const folder = await prompts.text({
-    message: "Extensions folder",
-    placeholder: DEFAULT_EXTENSIONS_FOLDER,
-    initialValue: DEFAULT_EXTENSIONS_FOLDER,
+  const dir = await prompts.text({
+    message: "Extensions dir",
+    placeholder: DEFAULT_EXTENSIONS_DIR,
+    initialValue: DEFAULT_EXTENSIONS_DIR,
   });
-  if (prompts.isCancel(folder)) return undefined;
-  return folder;
+  if (prompts.isCancel(dir)) return undefined;
+  return dir;
 };
 
 const readFirstMonorepoExtensionName = async (
@@ -197,12 +196,12 @@ const promptForCreateTarget = async (prompts: Prompts): Promise<CreateTarget | s
 
 const createFirstMonorepoExtensionRoot = (
   monoRoot: string,
-  extensionsFolder: string,
+  extensionsDir: string,
   extensionName: string | undefined,
 ): string | undefined => {
   if (extensionName === undefined) return undefined;
 
-  const extensionRoot = path.join(monoRoot, extensionsFolder, extensionName);
+  const extensionRoot = path.join(monoRoot, extensionsDir, extensionName);
   createExtension({
     extensionName,
     extensionRoot,
@@ -216,13 +215,12 @@ const createFirstMonorepoExtensionRoot = (
 };
 
 const readExtensionCreateMode = (packageRoot: string): ExtensionCreateMode => {
-  const extensionsFolder = readPiPackExtensionsFolderFromPackageRoot(packageRoot);
-  if (extensionsFolder === undefined)
-    return { type: "standalone", extensionRootParent: packageRoot };
+  const extensionsDir = readPiPackExtensionsDirFromPackageRoot(packageRoot);
+  if (extensionsDir === undefined) return { type: "standalone", extensionRootParent: packageRoot };
 
   return {
     type: "monorepo",
-    extensionRootParent: path.join(packageRoot, extensionsFolder),
+    extensionRootParent: path.join(packageRoot, extensionsDir),
     repoName: readPackageNameFromPackageRoot(packageRoot),
     repoRoot: packageRoot,
   };

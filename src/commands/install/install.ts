@@ -24,8 +24,8 @@ export type ResolvedInstall = {
   pnpmDependency: string;
   packageName: string;
   installAs: string;
-  piExtensionsFolder: string;
-  absInstallFolder: string;
+  piExtensionsDir: string;
+  absInstallDir: string;
 };
 
 export type TmpInstall = ResolvedInstall & {
@@ -53,16 +53,14 @@ export const installExtension = async (install: ResolvedInstall): Promise<Instal
 };
 
 const assertCanInstall = (install: ResolvedInstall): void => {
-  if (!existsSync(install.absInstallFolder)) return;
-  if (readdirSync(install.absInstallFolder).length === 0) return;
-  throw new Error(
-    `Extension already exists: ${install.absInstallFolder}. Delete it manually first.`,
-  );
+  if (!existsSync(install.absInstallDir)) return;
+  if (readdirSync(install.absInstallDir).length === 0) return;
+  throw new Error(`Extension already exists: ${install.absInstallDir}. Delete it manually first.`);
 };
 
 const createTmpInstall = (install: ResolvedInstall): TmpInstall => {
-  mkdirSync(install.piExtensionsFolder, { recursive: true });
-  const tmpRoot = mkdtempSync(path.join(install.piExtensionsFolder, ".pi-pack-install-"));
+  mkdirSync(install.piExtensionsDir, { recursive: true });
+  const tmpRoot = mkdtempSync(path.join(install.piExtensionsDir, ".pi-pack-install-"));
   writeJson(path.join(tmpRoot, "package.json"), INSTALLED_EXTENSION_PACKAGE_JSON);
   return { ...install, tmpRoot };
 };
@@ -115,8 +113,8 @@ const assertDefaultConfigIsInsidePackage = (
 };
 
 const finalizeInstall = (install: TmpInstall): void => {
-  mkdirSync(path.dirname(install.absInstallFolder), { recursive: true });
-  renameSync(install.tmpRoot, install.absInstallFolder);
+  mkdirSync(path.dirname(install.absInstallDir), { recursive: true });
+  renameSync(install.tmpRoot, install.absInstallDir);
 };
 
 const cleanupTmpInstall = (install: TmpInstall): void => {

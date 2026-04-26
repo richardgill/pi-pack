@@ -38,7 +38,7 @@ test("pi-pack create --mono-dir packages repo infers a monorepo root", async () 
       dirs: ["repo/packages"],
       files: {
         "repo/package.json": {
-          json: { "pi-pack": { "extensions-folder": "packages" } },
+          json: { "pi-pack": { "extensions-dir": "packages" } },
         },
         "repo/README.md": {
           contains: [
@@ -53,10 +53,10 @@ test("pi-pack create --mono-dir packages repo infers a monorepo root", async () 
   });
 });
 
-test("pi-pack create files uses the configured extensions folder", async () => {
+test("pi-pack create files uses the configured extensions dir", async () => {
   await withTempDir(async ({ cwd, run }) => {
     writeJson(path.join(cwd, "package.json"), {
-      "pi-pack": { "extensions-folder": "packages" },
+      "pi-pack": { "extensions-dir": "packages" },
     });
 
     await run("pi-pack create files");
@@ -64,7 +64,7 @@ test("pi-pack create files uses the configured extensions folder", async () => {
     expectFileTree(cwd, {
       files: {
         "package.json": {
-          json: { "pi-pack": { "extensions-folder": "packages" } },
+          json: { "pi-pack": { "extensions-dir": "packages" } },
         },
         "packages/files/package.json": true,
       },
@@ -83,25 +83,25 @@ test("pi-pack create rejects path-like extension names", async () => {
   });
 });
 
-test("pi-pack create rejects configured extension folders that escape the cwd", async () => {
+test("pi-pack create rejects configured extension dirs that escape the cwd", async () => {
   await withTempDir(async ({ cwd, run }) => {
     writeJson(path.join(cwd, "package.json"), {
-      "pi-pack": { "extensions-folder": "../escaped" },
+      "pi-pack": { "extensions-dir": "../escaped" },
     });
 
     const result = await run("pi-pack create files");
 
     expect(result.stderr).toContain(
-      "pi-pack.extensions-folder must be a safe relative path: ../escaped.",
+      "pi-pack.extensions-dir must be a safe relative path: ../escaped.",
     );
     expectFileTree(cwd, { missing: ["../escaped/files/package.json"] });
   });
 });
 
-test("pi-pack create adds a second extension to the configured extensions folder", async () => {
+test("pi-pack create adds a second extension to the configured extensions dir", async () => {
   await withTempDir(async ({ cwd, run }) => {
     writeJson(path.join(cwd, "package.json"), {
-      "pi-pack": { "extensions-folder": "extensions" },
+      "pi-pack": { "extensions-dir": "extensions" },
     });
 
     await run("pi-pack create files");
@@ -125,7 +125,7 @@ test("interactive pi-pack create inside a monorepo prompts for an extension name
 
   await withTempDir(async ({ cwd, run }) => {
     writeJson(path.join(cwd, "package.json"), {
-      "pi-pack": { "extensions-folder": "extensions" },
+      "pi-pack": { "extensions-dir": "extensions" },
     });
 
     const result = await run("pi-pack create", { promptHandler });
@@ -147,7 +147,7 @@ test("pi-pack create --mono repo creates a monorepo root", async () => {
           json: {
             name: "repo",
             private: true,
-            "pi-pack": { "extensions-folder": "extensions" },
+            "pi-pack": { "extensions-dir": "extensions" },
           },
         },
         "repo/README.md": {
@@ -170,7 +170,7 @@ test("pi-pack create --mono repo --mono-dir packages creates a custom monorepo r
       dirs: ["repo/packages"],
       files: {
         "repo/package.json": {
-          json: { "pi-pack": { "extensions-folder": "packages" } },
+          json: { "pi-pack": { "extensions-dir": "packages" } },
         },
       },
     });
@@ -186,11 +186,11 @@ test("pi-pack create --mono rejects path-like repo names", async () => {
   });
 });
 
-test("pi-pack create --mono-dir rejects folders that escape the repo root", async () => {
+test("pi-pack create --mono-dir rejects dirs that escape the repo root", async () => {
   await withTempDir(async ({ cwd, run }) => {
     const result = await run("pi-pack create --mono repo --mono-dir ../packages");
 
-    expect(result.stderr).toContain("Extensions folder must be a safe relative path: ../packages.");
+    expect(result.stderr).toContain("Extensions dir must be a safe relative path: ../packages.");
     expectFileTree(cwd, { missing: ["packages/package.json"] });
   });
 });
@@ -199,7 +199,7 @@ test("interactive pi-pack create can create a monorepo with a first extension", 
   const promptHandler: PromptHandler = (prompt) => {
     if (prompt.message === "What do you want to create?") return "mono";
     if (prompt.message === "Repo name") return "repo";
-    if (prompt.message === "Extensions folder") return acceptDefault;
+    if (prompt.message === "Extensions dir") return acceptDefault;
     if (prompt.message === "First extension name. e.g. pi-preset") return "files";
     throw new Error(`Unexpected prompt: ${prompt.message}`);
   };
@@ -213,7 +213,7 @@ test("interactive pi-pack create can create a monorepo with a first extension", 
     expectFileTree(cwd, {
       files: {
         "repo/package.json": {
-          json: { "pi-pack": { "extensions-folder": "extensions" } },
+          json: { "pi-pack": { "extensions-dir": "extensions" } },
         },
         "repo/extensions/files/package.json": true,
         "repo/extensions/files/src/extension.ts": true,
@@ -234,8 +234,8 @@ test("interactive pi-pack create rejects path-like first extension names", async
   const promptHandler: PromptHandler = (prompt) => {
     if (prompt.message === "What do you want to create?") return "mono";
     if (prompt.message === "Repo name") return "repo";
-    if (prompt.message === "Extensions folder") return acceptDefault;
-    if (prompt.message === "First extension name. e.g. pi-preset") return "folder/files";
+    if (prompt.message === "Extensions dir") return acceptDefault;
+    if (prompt.message === "First extension name. e.g. pi-preset") return "dir/files";
     throw new Error(`Unexpected prompt: ${prompt.message}`);
   };
 
@@ -243,9 +243,9 @@ test("interactive pi-pack create rejects path-like first extension names", async
     const result = await run("pi-pack create", { promptHandler });
 
     expect(result.stderr).toContain(
-      "Extension name must be a single filesystem path segment: folder/files.",
+      "Extension name must be a single filesystem path segment: dir/files.",
     );
-    expectFileTree(cwd, { missing: ["repo/extensions/folder/files/package.json"] });
+    expectFileTree(cwd, { missing: ["repo/extensions/dir/files/package.json"] });
   });
 });
 
@@ -273,7 +273,7 @@ test("interactive pi-pack create can create an extension package", async () => {
 test("interactive pi-pack create --mono prompts for the repo and first extension names", async () => {
   const promptHandler: PromptHandler = (prompt) => {
     if (prompt.message === "Repo name") return "repo";
-    if (prompt.message === "Extensions folder") return acceptDefault;
+    if (prompt.message === "Extensions dir") return acceptDefault;
     if (prompt.message === "First extension name. e.g. pi-preset") return "files";
     throw new Error(`Unexpected prompt: ${prompt.message}`);
   };
@@ -284,7 +284,7 @@ test("interactive pi-pack create --mono prompts for the repo and first extension
     expectFileTree(cwd, {
       files: {
         "repo/package.json": {
-          json: { "pi-pack": { "extensions-folder": "extensions" } },
+          json: { "pi-pack": { "extensions-dir": "extensions" } },
         },
         "repo/extensions/files/package.json": true,
       },
@@ -305,7 +305,7 @@ test("interactive pi-pack create --mono-dir prompts for the repo and first exten
     expectFileTree(cwd, {
       files: {
         "repo/package.json": {
-          json: { "pi-pack": { "extensions-folder": "packages" } },
+          json: { "pi-pack": { "extensions-dir": "packages" } },
         },
         "repo/packages/files/package.json": true,
       },

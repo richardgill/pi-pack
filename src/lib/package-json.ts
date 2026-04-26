@@ -26,7 +26,7 @@ export type PackageJson = {
 
 export type PiPackPackageConfig = {
   managed?: boolean;
-  "extensions-folder"?: string;
+  "extensions-dir"?: string;
   "default-config"?: string;
   "requires-config-edit"?: boolean;
 };

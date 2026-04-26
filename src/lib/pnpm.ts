@@ -13,7 +13,7 @@ type RunPnpmOptions = {
 
 const require = createRequire(import.meta.url);
 
-// pnpm doesn't allow us to grab the package name if it's in a subfolder
+// pnpm doesn't allow us to grab the package name if it's in a subdir
 // we write it to /tmp and read it from there
 export const inferPackageName = async (source: string): Promise<string> => {
   const tempRoot = mkdtempSync(path.join(os.tmpdir(), "pi-pack-install-"));

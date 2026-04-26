@@ -34,7 +34,7 @@ export const runUninstall = async (
     return;
   }
 
-  removeExtensionFolders(targets);
+  removeExtensionDirs(targets);
   printUninstallSummary(context, targets);
 };
 
@@ -94,7 +94,7 @@ const confirmUninstall = async (
   return confirmed;
 };
 
-const removeExtensionFolders = (targets: ManagedExtension[]): void => {
+const removeExtensionDirs = (targets: ManagedExtension[]): void => {
   targets.forEach((target) => {
     rmSync(target.root, { recursive: true, force: true });
   });

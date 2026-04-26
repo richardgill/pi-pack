@@ -2,11 +2,11 @@ import path from "node:path";
 import { getAgentDir } from "@mariozechner/pi-coding-agent";
 import { isSafePathSegment } from "~/lib/path";
 
-export const resolvePiExtensionsFolder = (): string => path.resolve(getAgentDir(), "extensions");
+export const resolvePiExtensionsDir = (): string => path.resolve(getAgentDir(), "extensions");
 
-export const resolveExtensionFolder = (extensionName: string): string => {
+export const resolveExtensionDir = (extensionName: string): string => {
   assertSafeExtensionName(extensionName);
-  return path.join(resolvePiExtensionsFolder(), extensionName);
+  return path.join(resolvePiExtensionsDir(), extensionName);
 };
 
 export const assertSafeExtensionName = (extensionName: string, hint?: string): void => {

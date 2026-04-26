@@ -5,10 +5,10 @@ export type RootFlags = Record<string, never>;
 export type RootArgs = [];
 
 const helpText = `USAGE
-  pi-pack install [--extension <extension-name>] [--as <extension-folder>] <source>
+  pi-pack install [--extension <extension-name>] [--as <extension-dir>] <source>
   pi-pack upgrade [--bump] [extension-name...]
   pi-pack uninstall [--yes] [extension-name...]
-  pi-pack create [--mono-dir <extensions-folder>] [--mono] [name]
+  pi-pack create [--mono-dir <extensions-dir>] [--mono] [name]
 
 A packaging system for pi extensions
 

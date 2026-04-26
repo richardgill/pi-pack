@@ -96,7 +96,7 @@ pi-pack uninstall files tasks  # remove named extensions after confirmation
 pi-pack uninstall files --yes  # skip confirmation
 ```
 
-Uninstall permanently deletes the extension folders, including `config.ts`.
+Uninstall permanently deletes the extension dirs, including `config.ts`.
 Only pi-pack managed extensions are shown or removed.
 
 ### What `pi-pack install` does
@@ -152,7 +152,7 @@ pi-pack extensions repos are simple npm packages:
 
 Run `pi-pack create` to create an extension.
 
-`pi-pack create <name>` creates a single extension package folder.
+`pi-pack create <name>` creates a single extension package dir.
 
 #### Single repo extensions
 
@@ -250,8 +250,8 @@ mono-repo/
 // package.json
 {
   "pi-pack": {
-    // folder where extensions are kept
-    "extensions-folder": "extensions"
+    // dir where extensions are kept
+    "extensions-dir": "extensions"
   }
 }
 ```

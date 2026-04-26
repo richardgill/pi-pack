@@ -2,7 +2,7 @@ import path from "node:path";
 import type { LocalContext } from "~/context";
 import type { VerboseFlags } from "~/lib/flags";
 import { INSTALLED_EXTENSION_CONFIG_FILE } from "~/lib/package-json";
-import { assertSafeExtensionName, resolvePiExtensionsFolder } from "~/lib/pi";
+import { assertSafeExtensionName, resolvePiExtensionsDir } from "~/lib/pi";
 import { inferPackageName } from "~/lib/pnpm";
 import { installExtension, type InstallResult, type ResolvedInstall } from "./install";
 import { toPnpmDependency } from "./sources";
@@ -35,14 +35,14 @@ const resolveInstall = async (
   const packageName = await inferPackageName(pnpmDependency);
   const installAs = flags.as ?? packageName;
   assertSafeExtensionName(installAs, "Use --as to choose a different name.");
-  const piExtensionsFolder = resolvePiExtensionsFolder();
+  const piExtensionsDir = resolvePiExtensionsDir();
 
   return {
     pnpmDependency,
     packageName,
     installAs,
-    piExtensionsFolder,
-    absInstallFolder: path.join(piExtensionsFolder, installAs),
+    piExtensionsDir,
+    absInstallDir: path.join(piExtensionsDir, installAs),
   };
 };
 
@@ -61,13 +61,13 @@ const printInstallSummary = (
   result: InstallResult,
 ): void => {
   const configInstructions = result.requiresConfigEdit
-    ? ["", `Edit config: ${path.join(install.absInstallFolder, INSTALLED_EXTENSION_CONFIG_FILE)}`]
+    ? ["", `Edit config: ${path.join(install.absInstallDir, INSTALLED_EXTENSION_CONFIG_FILE)}`]
     : [];
 
   context.process.stdout.write(
     [
       `Installed pi extension: ${install.installAs}`,
-      `Location: ${install.absInstallFolder}`,
+      `Location: ${install.absInstallDir}`,
       ...configInstructions,
       "",
     ].join("\n"),

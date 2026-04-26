@@ -1,5 +1,5 @@
 import { listManagedExtensions, resolveManagedExtensions } from "~/lib/managed-extensions";
-import { resolvePiExtensionsFolder } from "~/lib/pi";
+import { resolvePiExtensionsDir } from "~/lib/pi";
 
 export type UpgradeTarget = {
   extensionName: string;
@@ -9,7 +9,7 @@ export type UpgradeTarget = {
 export const resolveUpgradeTargets = (extensionNames: string[]): UpgradeTarget[] => {
   const targets = readUpgradeTargets(extensionNames);
   if (targets.length > 0) return targets;
-  throw new Error(`No installed extensions found at ${resolvePiExtensionsFolder()}`);
+  throw new Error(`No installed extensions found at ${resolvePiExtensionsDir()}`);
 };
 
 const readUpgradeTargets = (extensionNames: string[]): UpgradeTarget[] => {

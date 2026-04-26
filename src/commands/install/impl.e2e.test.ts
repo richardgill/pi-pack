@@ -112,7 +112,7 @@ test("pi-pack install --extension installs a package from a configured monorepo"
     const agentDir = path.join(cwd, "agent");
     const repoRoot = path.join(cwd, "repo");
     writeJson(path.join(repoRoot, "package.json"), {
-      "pi-pack": { "extensions-folder": "packages" },
+      "pi-pack": { "extensions-dir": "packages" },
     });
     createExtensionPackage(path.join(repoRoot, "packages"), "files");
 
@@ -128,19 +128,19 @@ test("pi-pack install --extension installs a package from a configured monorepo"
   });
 });
 
-test("pi-pack install --extension rejects configured folders that escape the source root", async () => {
+test("pi-pack install --extension rejects configured dirs that escape the source root", async () => {
   await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const repoRoot = path.join(cwd, "repo");
     writeJson(path.join(repoRoot, "package.json"), {
-      "pi-pack": { "extensions-folder": "../packages" },
+      "pi-pack": { "extensions-dir": "../packages" },
     });
     createExtensionPackage(path.join(cwd, "packages"), "files");
 
     const result = await run(`pi-pack install ${repoRoot} --extension files`);
 
     expect(result.stderr).toContain(
-      "pi-pack.extensions-folder must be a safe relative path: ../packages.",
+      "pi-pack.extensions-dir must be a safe relative path: ../packages.",
     );
     expectFileTree(agentDir, { missing: ["extensions/files"] });
   });
@@ -187,7 +187,7 @@ test("pi-pack install --extension resolves relative file sources against the com
   await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     writeJson(path.join(cwd, "repo", "package.json"), {
-      "pi-pack": { "extensions-folder": "extensions" },
+      "pi-pack": { "extensions-dir": "extensions" },
     });
     createExtensionPackage(path.join(cwd, "repo", "extensions"), "files");
 
@@ -203,7 +203,7 @@ test("pi-pack install --extension resolves relative file sources against the com
   });
 });
 
-test("pi-pack install --extension requires a configured extensions folder", async () => {
+test("pi-pack install --extension requires a configured extensions dir", async () => {
   await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     writeJson(path.join(cwd, "repo", "package.json"), {});
@@ -211,7 +211,7 @@ test("pi-pack install --extension requires a configured extensions folder", asyn
 
     const result = await run("pi-pack install ./repo --extension files");
 
-    expect(result.stderr).toContain("Missing pi-pack.extensions-folder");
+    expect(result.stderr).toContain("Missing pi-pack.extensions-dir");
     expectFileTree(agentDir, { missing: ["extensions/files"] });
   });
 });
@@ -220,13 +220,13 @@ test("pi-pack install --extension rejects path-like extension names", async () =
   await withTempDir(async ({ cwd, run }) => {
     const repoRoot = path.join(cwd, "repo");
     writeJson(path.join(repoRoot, "package.json"), {
-      "pi-pack": { "extensions-folder": "extensions" },
+      "pi-pack": { "extensions-dir": "extensions" },
     });
 
-    const result = await run(`pi-pack install ${repoRoot} --extension folder/files`);
+    const result = await run(`pi-pack install ${repoRoot} --extension dir/files`);
 
     expect(result.stderr).toContain(
-      "Extension name must be a single filesystem path segment: folder/files",
+      "Extension name must be a single filesystem path segment: dir/files",
     );
   });
 });
