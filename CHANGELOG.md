@@ -1,5 +1,11 @@
 # pi-pack
 
+## 0.0.4
+
+### Patch Changes
+
+- [`e302545`](https://github.com/richardgill/pi-pack/commit/e302545c41010e1105ad7c2f15a9fbb42db61fc8) Thanks [@richardgill](https://github.com/richardgill)! - Improve extension install, create, and upgrade flows with safer package resolution and validation.
+
 ## 0.0.3
 
 ### Patch Changes
