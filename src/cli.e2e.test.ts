@@ -13,7 +13,7 @@ const expectSuccess = (result: ReturnType<typeof run>) => {
 test("published bin runs built CLI", () => {
   expectSuccess(run("npm", ["run", "build"]));
 
-  const result = run(process.execPath, ["bin/pi-pack.cjs", "--version"]);
+  const result = run(process.execPath, [packageJson.bin["pi-pack"], "--version"]);
 
   expectSuccess(result);
   expect(result.stdout.trim()).toBe(packageJson.version);

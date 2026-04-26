@@ -7,10 +7,9 @@
     "url": "git+https://github.com/richardgill/pi-pack.git"
   },
   "bin": {
-    "pi-pack": "bin/pi-pack.cjs"
+    "pi-pack": "dist/cli.mjs"
   },
   "files": [
-    "bin",
     "dist"
   ],
   "type": "module",
