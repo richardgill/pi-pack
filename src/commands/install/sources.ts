@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { runCommand } from "~/lib/command";
-import { readRequiredConfiguredExtensionsFolder } from "~/lib/package-config";
+import { readRequiredPiPackExtensionsFolder } from "~/lib/package-config";
 import { assertSafeExtensionName } from "~/lib/pi";
 
 export const toPnpmDependency = async (
@@ -46,7 +46,7 @@ const readExtensionsFolder = async (cwd: string, source: string): Promise<string
 };
 
 const readLocalExtensionsFolder = (repoRoot: string): string =>
-  readRequiredConfiguredExtensionsFolder(path.join(repoRoot, "package.json"));
+  readRequiredPiPackExtensionsFolder(path.join(repoRoot, "package.json"));
 
 const readGitExtensionsFolder = async (source: string): Promise<string> => {
   const parsed = parseGitSource(source);
@@ -54,7 +54,7 @@ const readGitExtensionsFolder = async (source: string): Promise<string> => {
 
   try {
     await checkoutGitPackageJson(tempRoot, parsed);
-    return readRequiredConfiguredExtensionsFolder(path.join(tempRoot, "package.json"));
+    return readRequiredPiPackExtensionsFolder(path.join(tempRoot, "package.json"));
   } finally {
     rmSync(tempRoot, { recursive: true, force: true });
   }

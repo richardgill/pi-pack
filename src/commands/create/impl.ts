@@ -2,14 +2,13 @@ import path from "node:path";
 import type { LocalContext } from "~/context";
 import type { VerboseFlags } from "~/lib/flags";
 import { assertSafeRelativePath, assertSafePathSegment } from "~/lib/path";
+import {
+  readPackageNameFromPackageRoot,
+  readPiPackExtensionsFolderFromPackageRoot,
+} from "~/lib/package-config";
 import { assertSafeExtensionName } from "~/lib/pi";
 import { createPrompts, maybeCreatePrompts } from "~/lib/prompts";
-import {
-  createExtension,
-  createMono,
-  readConfiguredExtensionsFolder,
-  readConfiguredRepoName,
-} from "./scaffold";
+import { createExtension, createMono } from "./scaffold";
 
 export type CreateFlags = VerboseFlags & {
   mono?: boolean;
@@ -23,6 +22,7 @@ type CreateTarget = "extension" | "mono";
 type Prompts = ReturnType<typeof createPrompts>;
 
 const DEFAULT_EXTENSIONS_FOLDER = "extensions";
+const DEFAULT_EXTENSION_NAME_PREFIX = "pi-";
 
 export const runCreate = async (
   context: LocalContext,
@@ -56,7 +56,12 @@ const runCreateMonorepo = async (
   if (firstExtensionName !== undefined) assertSafeExtensionName(firstExtensionName);
 
   const monoRoot = path.join(context.cwd, repoName);
-  createMono({ type: "mono", cwd: context.cwd, repoName, extensionsFolder, firstExtensionName });
+  createMono({
+    cwd: context.cwd,
+    repoName,
+    extensionsFolder,
+    firstExtensionName,
+  });
   const firstExtensionRoot = createFirstMonorepoExtensionRoot(
     monoRoot,
     extensionsFolder,
@@ -76,7 +81,6 @@ const runCreateExtension = async (
 
   const extensionRoot = resolveExtensionRoot(context.cwd, extensionName);
   createExtension({
-    type: "extension",
     extensionName,
     extensionRoot,
     readmeContext: extensionReadmeContext(context.cwd),
@@ -91,7 +95,8 @@ const readMonorepoMode = async (
   name?: string,
 ): Promise<boolean | undefined> => {
   if (flags.mono === true || flags.monoDir !== undefined) return true;
-  if (name !== undefined || readConfiguredExtensionsFolder(cwd) !== undefined) return false;
+  if (name !== undefined || readPiPackExtensionsFolderFromPackageRoot(cwd) !== undefined)
+    return false;
   if (prompts === undefined)
     throw new Error("Usage: pi-pack create <name> or pi-pack create --mono <repo>");
 
@@ -124,7 +129,8 @@ const readExtensionName = async (
 
   const extensionName = await prompts.text({
     message: "Extension name. e.g. pi-preset",
-    placeholder: "pi-",
+    placeholder: DEFAULT_EXTENSION_NAME_PREFIX,
+    initialValue: DEFAULT_EXTENSION_NAME_PREFIX,
   });
   if (prompts.isCancel(extensionName)) return undefined;
   return extensionName;
@@ -153,7 +159,8 @@ const readFirstMonorepoExtensionName = async (
 
   const extensionName = await prompts.text({
     message: "First extension name. e.g. pi-preset",
-    placeholder: "pi-",
+    placeholder: DEFAULT_EXTENSION_NAME_PREFIX,
+    initialValue: DEFAULT_EXTENSION_NAME_PREFIX,
   });
   if (prompts.isCancel(extensionName)) return undefined;
   return extensionName;
@@ -164,7 +171,10 @@ const promptForCreateTarget = async (prompts: Prompts): Promise<CreateTarget | s
     message: "What do you want to create?",
     options: [
       { value: "extension", label: "Single extension" },
-      { value: "mono", label: "Extension monorepo (multiple extensions in a single repo)" },
+      {
+        value: "mono",
+        label: "Extension monorepo (multiple extensions in a single repo)",
+      },
     ],
   });
 
@@ -182,16 +192,19 @@ const createFirstMonorepoExtensionRoot = (
 
   const extensionRoot = path.join(monoRoot, extensionsFolder, extensionName);
   createExtension({
-    type: "extension",
     extensionName,
     extensionRoot,
-    readmeContext: { type: "monorepo", repoName: path.basename(monoRoot), repoRoot: monoRoot },
+    readmeContext: {
+      type: "monorepo",
+      repoName: path.basename(monoRoot),
+      repoRoot: monoRoot,
+    },
   });
   return extensionRoot;
 };
 
 const resolveExtensionRoot = (cwd: string, extensionName: string): string => {
-  const configured = readConfiguredExtensionsFolder(cwd);
+  const configured = readPiPackExtensionsFolderFromPackageRoot(cwd);
   if (configured === undefined) return path.join(cwd, extensionName);
   return path.join(cwd, configured, extensionName);
 };
@@ -199,9 +212,13 @@ const resolveExtensionRoot = (cwd: string, extensionName: string): string => {
 const extensionReadmeContext = (
   cwd: string,
 ): Parameters<typeof createExtension>[0]["readmeContext"] => {
-  const configured = readConfiguredExtensionsFolder(cwd);
+  const configured = readPiPackExtensionsFolderFromPackageRoot(cwd);
   if (configured === undefined) return { type: "standalone" };
-  return { type: "monorepo", repoName: readConfiguredRepoName(cwd), repoRoot: cwd };
+  return {
+    type: "monorepo",
+    repoName: readPackageNameFromPackageRoot(cwd),
+    repoRoot: cwd,
+  };
 };
 
 const writeExtensionCreateResult = (context: LocalContext, name: string, root: string): void => {

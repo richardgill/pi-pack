@@ -1,7 +1,10 @@
 import type { PiPackPackageJson } from "~/lib/package-json";
 import { toPascalCase } from "~/lib/string";
 
-export const rootPackageJson = (name: string, extensionsFolder: string): PiPackPackageJson => ({
+export const monorepoRootPackageJson = (
+  name: string,
+  extensionsFolder: string,
+): PiPackPackageJson => ({
   name,
   private: true,
   "pi-pack": {

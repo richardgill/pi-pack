@@ -1,16 +1,12 @@
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import {
-  readConfiguredExtensionsFolder as readPackageConfiguredExtensionsFolder,
-  readPackage,
-} from "~/lib/package-config";
 import { writeJson } from "~/lib/json";
 import { assertSafePathSegment, assertSafeRelativePath } from "~/lib/path";
 import { assertSafeExtensionName } from "~/lib/pi";
 import {
   extensionPackageJson,
   indexDotTs,
-  rootPackageJson,
+  monorepoRootPackageJson,
   defaultConfigSource,
   monorepoExtensionReadme,
   monorepoReadme,
@@ -18,55 +14,52 @@ import {
   tsconfig,
 } from "./templates";
 
-export type MonoCreateSelection = {
-  type: "mono";
-  cwd: string;
-  repoName: string;
-  extensionsFolder: string;
-  firstExtensionName?: string;
-};
-
 type ExtensionReadmeContext =
   | { type: "standalone" }
   | { type: "monorepo"; repoName: string; repoRoot: string };
 
-export type ExtensionCreateSelection = {
-  type: "extension";
-  extensionName: string;
-  extensionRoot: string;
-  readmeContext: ExtensionReadmeContext;
-};
+export const createMono = ({
+  cwd,
+  repoName,
+  extensionsFolder,
+  firstExtensionName,
+}: {
+  cwd: string;
+  repoName: string;
+  extensionsFolder: string;
+  firstExtensionName?: string;
+}): void => {
+  assertSafePathSegment(repoName, "Repo name");
+  assertSafeRelativePath(extensionsFolder, "Extensions folder");
 
-export const createMono = (params: MonoCreateSelection): void => {
-  assertSafePathSegment(params.repoName, "Repo name");
-  assertSafeRelativePath(params.extensionsFolder, "Extensions folder");
-
-  const root = path.join(params.cwd, params.repoName);
-  assertCanWrite(root);
-  mkdirSync(path.join(root, params.extensionsFolder), { recursive: true });
+  const monorepoRoot = path.join(cwd, repoName);
+  assertDirEmpty(monorepoRoot);
+  mkdirSync(path.join(monorepoRoot, extensionsFolder), { recursive: true });
   writeJson(
-    path.join(root, "package.json"),
-    rootPackageJson(params.repoName, params.extensionsFolder),
+    path.join(monorepoRoot, "package.json"),
+    monorepoRootPackageJson(repoName, extensionsFolder),
   );
   writeFileSync(
-    path.join(root, "README.md"),
-    monorepoReadme(params.repoName, params.extensionsFolder, params.firstExtensionName),
+    path.join(monorepoRoot, "README.md"),
+    monorepoReadme(repoName, extensionsFolder, firstExtensionName),
     "utf8",
   );
 };
 
-export const createExtension = (params: ExtensionCreateSelection): void => {
-  assertSafeExtensionName(params.extensionName);
+export const createExtension = ({
+  extensionName,
+  extensionRoot,
+  readmeContext,
+}: {
+  extensionName: string;
+  extensionRoot: string;
+  readmeContext: ExtensionReadmeContext;
+}): void => {
+  assertSafeExtensionName(extensionName);
 
-  assertCanWrite(params.extensionRoot);
-  writeExtensionFiles(params.extensionRoot, params.extensionName, params.readmeContext);
+  assertDirEmpty(extensionRoot);
+  writeExtensionFiles(extensionRoot, extensionName, readmeContext);
 };
-
-export const readConfiguredExtensionsFolder = (cwd: string): string | undefined =>
-  readPackageConfiguredExtensionsFolder(path.join(cwd, "package.json"));
-
-export const readConfiguredRepoName = (cwd: string): string =>
-  readPackage(path.join(cwd, "package.json")).name ?? path.basename(cwd);
 
 const writeExtensionFiles = (
   extensionRoot: string,
@@ -109,7 +102,7 @@ const extensionReadme = (
 const formatMarkdownPath = (markdownPath: string): string =>
   markdownPath.startsWith(".") ? markdownPath : `./${markdownPath}`;
 
-const assertCanWrite = (targetPath: string): void => {
+const assertDirEmpty = (targetPath: string): void => {
   if (!existsSync(targetPath)) return;
   const entries = readdirSync(targetPath);
   if (entries.length === 0) return;
