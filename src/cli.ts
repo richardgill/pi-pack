@@ -4,7 +4,7 @@ import { run } from "@stricli/core";
 import { app } from "./app";
 import type { LocalContext } from "./context";
 import { buildContext } from "./context";
-import { normalizeRootHelpArgs, readCliRunArgs } from "./lib/cli-args";
+import { normalizeRootHelpArgs, readCliRunArgs } from "./lib/cli";
 
 export const runCli = async (args: string[], context: LocalContext): Promise<void> => {
   await run(app, normalizeRootHelpArgs(args), context);
