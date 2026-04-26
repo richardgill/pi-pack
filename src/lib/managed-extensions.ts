@@ -1,4 +1,5 @@
 import { existsSync, readdirSync } from "node:fs";
+import type { Dirent } from "node:fs";
 import path from "node:path";
 import { readJson } from "~/lib/json";
 import type { PackageJson } from "~/lib/package-json";
@@ -18,7 +19,7 @@ export const listManagedExtensions = (): ManagedExtension[] => {
   }
 
   const extensions = readdirSync(extensionsRoot, { withFileTypes: true })
-    .filter((entry) => isManagedExtensionEntry(extensionsRoot, entry.name, entry.isDirectory()))
+    .filter((entry) => isManagedExtensionEntry(extensionsRoot, entry))
     .map((entry) => ({ extensionName: entry.name, root: path.join(extensionsRoot, entry.name) }))
     .sort((a, b) => a.extensionName.localeCompare(b.extensionName));
 
@@ -36,9 +37,10 @@ const assertManagedExtensionRoot = (root: string): void => {
 
 const isManagedExtensionRoot = (root: string): boolean => {
   const packageJsonPath = path.join(root, "package.json");
-  if (!existsSync(packageJsonPath)) return false;
-
-  return readJson<PackageJson>(packageJsonPath)["pi-pack"]?.managed === true;
+  return (
+    existsSync(packageJsonPath) &&
+    readJson<PackageJson>(packageJsonPath)["pi-pack"]?.managed === true
+  );
 };
 
 const resolveManagedExtension = (extensionName: string): ManagedExtension => {
@@ -47,9 +49,7 @@ const resolveManagedExtension = (extensionName: string): ManagedExtension => {
   return { extensionName, root };
 };
 
-const isManagedExtensionEntry = (
-  extensionsRoot: string,
-  name: string,
-  isDirectory: boolean,
-): boolean =>
-  isDirectory && !name.startsWith(".") && isManagedExtensionRoot(path.join(extensionsRoot, name));
+const isManagedExtensionEntry = (extensionsRoot: string, entry: Dirent): boolean =>
+  entry.isDirectory() &&
+  !entry.name.startsWith(".") &&
+  isManagedExtensionRoot(path.join(extensionsRoot, entry.name));
