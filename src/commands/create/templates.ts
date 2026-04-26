@@ -25,6 +25,8 @@ export const extensionPackageJson = (name: string): PiPackPackageJson => ({
   },
 });
 
+export const gitignore = (): string => "node_modules/\n";
+
 export const standaloneExtensionReadme = (name: string): string => `# ${name}
 
 <Describe what this pi extension does.>

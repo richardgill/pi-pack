@@ -5,6 +5,7 @@ import { assertSafePathSegment, assertSafeRelativePath } from "~/lib/path";
 import { assertSafeExtensionName } from "~/lib/pi";
 import {
   extensionPackageJson,
+  gitignore,
   indexDotTs,
   monorepoRootPackageJson,
   defaultConfigSource,
@@ -39,6 +40,7 @@ export const createMono = ({
     path.join(monorepoRoot, "package.json"),
     monorepoRootPackageJson(repoName, extensionsDir),
   );
+  writeFileSync(path.join(monorepoRoot, ".gitignore"), gitignore(), "utf8");
   writeFileSync(
     path.join(monorepoRoot, "README.md"),
     monorepoReadme(repoName, extensionsDir, firstExtensionName),
@@ -69,6 +71,7 @@ const writeExtensionFiles = (
   const srcDir = path.join(extensionRoot, "src");
   mkdirSync(srcDir, { recursive: true });
   writeJson(path.join(extensionRoot, "package.json"), extensionPackageJson(name));
+  writeFileSync(path.join(extensionRoot, ".gitignore"), gitignore(), "utf8");
   writeFileSync(
     path.join(extensionRoot, "README.md"),
     extensionReadme(name, extensionRoot, readmeContext),

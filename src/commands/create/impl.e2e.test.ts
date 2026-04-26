@@ -20,6 +20,7 @@ test("pi-pack create files creates a single extension package", async () => {
         },
         "files/src/extension.ts": true,
         "files/src/default-config.ts": true,
+        "files/.gitignore": "node_modules/\n",
         "files/README.md": {
           contains: ['pi-pack install "npm:files"', 'import { extension } from "files";'],
           notContains: "@v1",
@@ -150,6 +151,7 @@ test("pi-pack create --mono repo creates a monorepo root", async () => {
             "pi-pack": { "extensions-dir": "extensions" },
           },
         },
+        "repo/.gitignore": "node_modules/\n",
         "repo/README.md": {
           contains: [
             "[`<extension-name>`](./extensions/<extension-name>/README.md)",
@@ -217,6 +219,7 @@ test("interactive pi-pack create can create a monorepo with a first extension", 
         },
         "repo/extensions/files/package.json": true,
         "repo/extensions/files/src/extension.ts": true,
+        "repo/extensions/files/.gitignore": "node_modules/\n",
         "repo/README.md": { contains: "[`files`](./extensions/files/README.md)" },
         "repo/extensions/files/README.md": {
           contains: [
