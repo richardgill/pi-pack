@@ -1,10 +1,12 @@
+// stricli is missing a string helper for string cli args
+export const stringParser = (input: string): string => input;
+
 export type CliRunArgs = {
   args: string[];
   verbose: boolean;
 };
 
-export const stringParser = (input: string): string => input;
-
+// Example: `pi-pack --verbose install npm:foo` becomes `{ args: ["install", "npm:foo"], verbose: true }`.
 export const readCliRunArgs = (args: string[]): CliRunArgs => ({
   args: args.filter((arg) => arg !== "--verbose"),
   verbose: args.some((arg) => arg === "--verbose"),
