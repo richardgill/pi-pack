@@ -5,8 +5,9 @@ import { readJson } from "~/lib/json";
 import type { PackageJson } from "~/lib/package-json";
 import { resolveExtensionRoot, resolvePiExtensionsRoot } from "~/lib/pi";
 
-// pi-pack extensions are managed if their package.json has:
+// pi extensions are "managed" by pi-pack if their package.json has:
 // { "pi-pack": { "managed": true } }
+
 export type ManagedExtension = {
   extensionName: string;
   root: string;
@@ -20,7 +21,7 @@ export const listManagedExtensions = (): ManagedExtension[] => {
 
   const extensions = readdirSync(extensionsRoot, { withFileTypes: true })
     .filter((entry) => isManagedExtensionEntry(extensionsRoot, entry))
-    .map((entry) => ({ extensionName: entry.name, root: path.join(extensionsRoot, entry.name) }))
+    .map((entry) => toManagedExtension(entry.name, path.join(extensionsRoot, entry.name)))
     .sort((a, b) => a.extensionName.localeCompare(b.extensionName));
 
   if (extensions.length > 0) return extensions;
@@ -43,8 +44,10 @@ const isManagedExtensionRoot = (root: string): boolean => {
   );
 };
 
-const resolveManagedExtension = (extensionName: string): ManagedExtension => {
-  const root = resolveExtensionRoot(extensionName);
+const resolveManagedExtension = (extensionName: string): ManagedExtension =>
+  toManagedExtension(extensionName, resolveExtensionRoot(extensionName));
+
+const toManagedExtension = (extensionName: string, root: string): ManagedExtension => {
   assertManagedExtensionRoot(root);
   return { extensionName, root };
 };
