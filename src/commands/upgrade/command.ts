@@ -1,7 +1,8 @@
 import { buildCommand } from "@stricli/core";
 import type { LocalContext } from "~/context";
 import { stringParser } from "~/lib/cli";
-import { runUserCommand, verboseFlag } from "~/lib/command";
+import { runUserCommand } from "~/lib/command";
+import { verboseFlag } from "~/lib/flags";
 import type { UpgradeArgs, UpgradeFlags } from "./impl";
 import { runUpgrade } from "./impl";
 

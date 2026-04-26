@@ -1,5 +1,5 @@
 import type { LocalContext } from "~/context";
-import type { VerboseFlags } from "~/lib/command";
+import type { VerboseFlags } from "~/lib/flags";
 import { upgradeTargets } from "./runner";
 import { printUpgradeFailures, printUpgradeSummary } from "./summary";
 import { resolveUpgradeTargets } from "./targets";

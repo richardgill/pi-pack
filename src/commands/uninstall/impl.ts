@@ -1,6 +1,6 @@
 import { rmSync } from "node:fs";
 import type { LocalContext } from "~/context";
-import type { VerboseFlags } from "~/lib/command";
+import type { VerboseFlags } from "~/lib/flags";
 import {
   listManagedExtensions,
   resolveManagedExtensions,

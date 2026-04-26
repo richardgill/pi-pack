@@ -1,16 +1,6 @@
 import { spawn } from "node:child_process";
 import type { LocalContext } from "~/context";
 
-export type VerboseFlags = {
-  verbose?: boolean;
-};
-
-export const verboseFlag = {
-  kind: "boolean",
-  brief: "Show verbose logging",
-  optional: true,
-} as const;
-
 export const runCommand = (command: string, args: string[], cwd: string): Promise<void> =>
   new Promise((resolve, reject) => {
     const child = spawn(command, args, {

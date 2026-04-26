@@ -1,6 +1,6 @@
 import path from "node:path";
 import type { LocalContext } from "~/context";
-import type { VerboseFlags } from "~/lib/command";
+import type { VerboseFlags } from "~/lib/flags";
 import { assertSafeRelativePath, assertSafePathSegment } from "~/lib/path";
 import { assertSafeExtensionName } from "~/lib/pi";
 import { createPrompts, maybeCreatePrompts } from "~/lib/prompts";

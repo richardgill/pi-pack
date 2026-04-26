@@ -1,6 +1,6 @@
 import path from "node:path";
 import type { LocalContext } from "~/context";
-import type { VerboseFlags } from "~/lib/command";
+import type { VerboseFlags } from "~/lib/flags";
 import { INSTALLED_EXTENSION_CONFIG_FILE } from "~/lib/package-json";
 import { assertSafeExtensionName, resolvePiExtensionsRoot } from "~/lib/pi";
 import { inferPackageName } from "~/lib/pnpm";
