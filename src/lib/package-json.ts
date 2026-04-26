@@ -1,3 +1,5 @@
+import { readJson } from "~/lib/json";
+
 // Ref: https://github.com/sindresorhus/type-fest/blob/main/source/package-json.d.ts
 type PackageJsonDependency = Partial<Record<string, string>>;
 
@@ -46,3 +48,6 @@ export const INSTALLED_EXTENSION_PACKAGE_JSON: PiPackPackageJson = {
   pi: { extensions: [`./${INSTALLED_EXTENSION_CONFIG_FILE}`] },
   "pi-pack": { managed: true },
 };
+
+export const readPackageJson = (packagePath: string): PackageJson =>
+  readJson<PackageJson>(packagePath);

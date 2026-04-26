@@ -1,10 +1,10 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { runCommand } from "~/lib/command";
-import { readJson, writeJson } from "~/lib/json";
-import { INSTALLED_EXTENSION_PACKAGE_JSON, type PackageJson } from "~/lib/package-json";
+import { writeJson } from "~/lib/json";
+import { INSTALLED_EXTENSION_PACKAGE_JSON, readPackageJson } from "~/lib/package-json";
 
 type RunPnpmOptions = {
   cwd: string;
@@ -20,7 +20,7 @@ export const inferPackageName = async (source: string): Promise<string> => {
 
   try {
     writeJson(path.join(tempRoot, "package.json"), INSTALLED_EXTENSION_PACKAGE_JSON);
-    await pnpmAddLockfileOnly(tempRoot, source);
+    await runPnpm({ cwd: tempRoot, args: ["add", "--lockfile-only", source] });
     return readSingleDependencyName(path.join(tempRoot, "package.json"));
   } finally {
     rmSync(tempRoot, { recursive: true, force: true });
@@ -28,6 +28,7 @@ export const inferPackageName = async (source: string): Promise<string> => {
 };
 
 export const pnpmAdd = async (cwd: string, source: string): Promise<void> => {
+  // --ignore-scripts for extra npm package safety
   await runPnpm({ cwd, args: ["add", "--ignore-scripts", source] });
 };
 
@@ -35,31 +36,21 @@ export const runPnpm = async ({ cwd, args }: RunPnpmOptions): Promise<void> => {
   await runCommand(process.execPath, [resolvePnpmBin(), ...args], cwd);
 };
 
-const getPnpmBin = (packageJson: PackageJson): string => {
-  if (typeof packageJson.bin === "string") return packageJson.bin;
-  const pnpmBin = packageJson.bin?.["pnpm"];
-  if (pnpmBin) return pnpmBin;
-  throw new Error("Could not resolve bundled pnpm binary");
-};
-
-// find the pnpm bundled with pi-pack
+// find the path to pnpm bundled with pi-pack
 export const resolvePnpmBin = (): string => {
   const packagePath = require.resolve("pnpm");
-  const packageJson = readPackageJson(packagePath);
-  const bin = getPnpmBin(packageJson);
-  return path.join(path.dirname(packagePath), bin);
+  const { bin } = readPackageJson(packagePath);
+  const pnpmBin = typeof bin === "string" ? bin : bin?.["pnpm"];
+  if (!pnpmBin) throw new Error("Could not resolve bundled pnpm binary");
+  return path.join(path.dirname(packagePath), pnpmBin);
 };
-
-const pnpmAddLockfileOnly = async (cwd: string, source: string): Promise<void> => {
-  await runPnpm({ cwd, args: ["add", "--lockfile-only", source] });
-};
-
-const readPackageJson = (packagePath: string): PackageJson =>
-  JSON.parse(readFileSync(packagePath, "utf8")) as PackageJson;
 
 const readSingleDependencyName = (packagePath: string): string => {
-  const packageJson = readJson<PackageJson>(packagePath);
-  const dependencies = Object.keys(packageJson.dependencies ?? {});
-  if (dependencies.length === 1) return dependencies[0];
-  throw new Error(`Expected one dependency in ${packagePath}`);
+  const dependencies = Object.keys(readPackageJson(packagePath).dependencies ?? {});
+  assertSingleDependency(dependencies, packagePath);
+  return dependencies[0];
+};
+
+const assertSingleDependency = (dependencies: string[], packagePath: string): void => {
+  if (dependencies.length !== 1) throw new Error(`Expected one dependency in ${packagePath}`);
 };
