@@ -4,6 +4,8 @@ import { readJson } from "~/lib/json";
 import type { PackageJson } from "~/lib/package-json";
 import { resolveExtensionRoot, resolvePiExtensionsRoot } from "~/lib/pi";
 
+// pi-pack extensions are managed if their package.json has:
+// { "pi-pack": { "managed": true } }
 export type ManagedExtension = {
   extensionName: string;
   root: string;
