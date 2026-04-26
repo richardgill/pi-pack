@@ -1,5 +1,4 @@
 # Contributing to pi-pack
-See [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ## Development Setup
 
