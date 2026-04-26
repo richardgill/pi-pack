@@ -2,8 +2,7 @@ import { Writable } from "node:stream";
 import { run } from "@stricli/core";
 import { app } from "~/app";
 import { buildContext, type LocalContext } from "~/context";
-import { normalizeRootHelpArgs } from "~/lib/root-help";
-import { readCliRunArgs } from "~/lib/run-args";
+import { normalizeRootHelpArgs, readCliRunArgs } from "~/lib/cli-args";
 import { withEnvVar } from "./env";
 import type { PromptHandler } from "./prompt-testing-types";
 

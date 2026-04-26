@@ -1,3 +1,13 @@
+export type CliRunArgs = {
+  args: string[];
+  verbose: boolean;
+};
+
+export const readCliRunArgs = (args: string[]): CliRunArgs => ({
+  args: args.filter((arg) => arg !== "--verbose"),
+  verbose: args.some((arg) => arg === "--verbose"),
+});
+
 // Make stricli show root help for empty args: `pi-pack --help` becomes `pi-pack`.
 // Command help still passes through unchanged: `pi-pack init --help` stays as-is.
 export const normalizeRootHelpArgs = (args: string[]): string[] => {
