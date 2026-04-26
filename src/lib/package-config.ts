@@ -1,11 +1,11 @@
 import { existsSync } from "node:fs";
 import { readJson } from "~/lib/json";
-import type { PackageJson } from "~/lib/package-json";
+import type { PiPackPackageJson } from "~/lib/package-json";
 import { assertSafeRelativePath } from "~/lib/path";
 
-export const readPackage = (packageJsonPath: string): PackageJson => {
+export const readPackage = (packageJsonPath: string): PiPackPackageJson => {
   if (!existsSync(packageJsonPath)) return {};
-  return readJson<PackageJson>(packageJsonPath);
+  return readJson<PiPackPackageJson>(packageJsonPath);
 };
 
 export const readConfiguredExtensionsFolder = (packageJsonPath: string): string | undefined => {

@@ -2,7 +2,7 @@ import { existsSync, readdirSync } from "node:fs";
 import type { Dirent } from "node:fs";
 import path from "node:path";
 import { readJson } from "~/lib/json";
-import type { PackageJson } from "~/lib/package-json";
+import type { PiPackPackageJson } from "~/lib/package-json";
 import { resolveExtensionRoot, resolvePiExtensionsRoot } from "~/lib/pi";
 
 // pi extensions are "managed" by pi-pack if their package.json has:
@@ -40,7 +40,7 @@ const isManagedExtensionRoot = (root: string): boolean => {
   const packageJsonPath = path.join(root, "package.json");
   return (
     existsSync(packageJsonPath) &&
-    readJson<PackageJson>(packageJsonPath)["pi-pack"]?.managed === true
+    readJson<PiPackPackageJson>(packageJsonPath)["pi-pack"]?.managed === true
   );
 };
 

@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { runCommand } from "~/lib/command";
 import { readJson, writeJson } from "~/lib/json";
-import { installedExtensionPackageJson, type PackageJson } from "~/lib/package-json";
+import { INSTALLED_EXTENSION_PACKAGE_JSON, type PackageJson } from "~/lib/package-json";
 
 type PackageJsonWithBin = {
   bin?: string | Record<string, string>;
@@ -23,7 +23,7 @@ export const inferPackageName = async (source: string): Promise<string> => {
   const tempRoot = mkdtempSync(path.join(os.tmpdir(), "pi-pack-install-"));
 
   try {
-    writeJson(path.join(tempRoot, "package.json"), installedExtensionPackageJson());
+    writeJson(path.join(tempRoot, "package.json"), INSTALLED_EXTENSION_PACKAGE_JSON);
     await pnpmAddLockfileOnly(tempRoot, source);
     return readSingleDependencyName(path.join(tempRoot, "package.json"));
   } finally {

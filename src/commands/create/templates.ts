@@ -1,7 +1,7 @@
-import type { PackageJson } from "~/lib/package-json";
+import type { PiPackPackageJson } from "~/lib/package-json";
 import { toPascalCase } from "~/lib/string";
 
-export const rootPackageJson = (name: string, extensionsFolder: string): PackageJson => ({
+export const rootPackageJson = (name: string, extensionsFolder: string): PiPackPackageJson => ({
   name,
   private: true,
   "pi-pack": {
@@ -9,7 +9,7 @@ export const rootPackageJson = (name: string, extensionsFolder: string): Package
   },
 });
 
-export const extensionPackageJson = (name: string): PackageJson => ({
+export const extensionPackageJson = (name: string): PiPackPackageJson => ({
   name,
   type: "module",
   exports: {

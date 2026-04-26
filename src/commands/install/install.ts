@@ -14,8 +14,8 @@ import path from "node:path";
 import { readJson, writeJson } from "~/lib/json";
 import {
   INSTALLED_EXTENSION_CONFIG_FILE,
-  installedExtensionPackageJson,
-  type PackageJson,
+  INSTALLED_EXTENSION_PACKAGE_JSON,
+  type PiPackPackageJson,
 } from "~/lib/package-json";
 import { assertSafeRelativePath } from "~/lib/path";
 import { pnpmAdd } from "~/lib/pnpm";
@@ -61,13 +61,13 @@ const assertCanInstall = (install: ResolvedInstall): void => {
 const createTmpInstall = (install: ResolvedInstall): TmpInstall => {
   mkdirSync(install.piExtensionsFolder, { recursive: true });
   const tmpRoot = mkdtempSync(path.join(install.piExtensionsFolder, ".pi-pack-install-"));
-  writeJson(path.join(tmpRoot, "package.json"), installedExtensionPackageJson());
+  writeJson(path.join(tmpRoot, "package.json"), INSTALLED_EXTENSION_PACKAGE_JSON);
   return { ...install, tmpRoot };
 };
 
 const copyDefaultConfigToInstalledConfig = (install: TmpInstall): InstallResult => {
   const packageRoot = path.join(install.tmpRoot, "node_modules", install.packageName);
-  const packageJson = readJson<PackageJson>(path.join(packageRoot, "package.json"));
+  const packageJson = readJson<PiPackPackageJson>(path.join(packageRoot, "package.json"));
   const piPackConfig = packageJson["pi-pack"];
   const defaultConfig = piPackConfig?.["default-config"] ?? DEFAULT_CONFIG_PATH;
   const sourcePath = resolveDefaultConfigSource(packageRoot, defaultConfig);
