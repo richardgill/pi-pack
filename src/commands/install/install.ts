@@ -53,9 +53,14 @@ export const installExtension = async (install: ResolvedInstall): Promise<Instal
 };
 
 const assertCanInstall = (install: ResolvedInstall): void => {
-  if (!existsSync(install.absInstallDir)) return;
-  if (readdirSync(install.absInstallDir).length === 0) return;
-  throw new Error(`Extension already exists: ${install.absInstallDir}. Delete it manually first.`);
+  const installDirExists = existsSync(install.absInstallDir);
+  const installDirHasFiles = readdirSync(install.absInstallDir).length > 0;
+
+  if (installDirExists || installDirHasFiles) {
+    throw new Error(
+      `Extension already exists: ${install.absInstallDir}. Delete it manually first.`,
+    );
+  }
 };
 
 const createTmpInstall = (install: ResolvedInstall): TmpInstall => {
