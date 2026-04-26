@@ -33,7 +33,8 @@ const resolveInstall = async (
 ): Promise<ResolvedInstall> => {
   const dependency = await resolveDependency(context, flags, source);
   const packageName = await inferPackageName(dependency);
-  const extensionName = readExtensionName(flags, packageName);
+  const extensionName = flags.as ?? packageName;
+  assertSafeExtensionName(extensionName, "Use --as to choose a different name.");
   const piExtensionsFolder = resolvePiExtensionsRoot();
 
   return {
@@ -71,10 +72,4 @@ const printInstallSummary = (
       "",
     ].join("\n"),
   );
-};
-
-const readExtensionName = (flags: InstallFlags, packageName: string): string => {
-  const extensionName = flags.as ?? packageName;
-  assertSafeExtensionName(extensionName, "Use --as to choose a different name.");
-  return extensionName;
 };
