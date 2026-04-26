@@ -21,11 +21,11 @@ import { assertSafeRelativePath } from "~/lib/path";
 import { pnpmAdd } from "~/lib/pnpm";
 
 export type ResolvedInstall = {
-  dependency: string;
+  pnpmDependency: string;
   packageName: string;
-  extensionName: string;
+  installAs: string;
   piExtensionsFolder: string;
-  targetRoot: string;
+  absInstallFolder: string;
 };
 
 export type TmpInstall = ResolvedInstall & {
@@ -43,7 +43,7 @@ export const installExtension = async (install: ResolvedInstall): Promise<Instal
 
   const tmpInstall = createTmpInstall(install);
   try {
-    await pnpmAdd(tmpInstall.tmpRoot, tmpInstall.dependency);
+    await pnpmAdd(tmpInstall.tmpRoot, tmpInstall.pnpmDependency);
     const result = copyDefaultConfigToInstalledConfig(tmpInstall);
     finalizeInstall(tmpInstall);
     return result;
@@ -53,9 +53,11 @@ export const installExtension = async (install: ResolvedInstall): Promise<Instal
 };
 
 const assertCanInstall = (install: ResolvedInstall): void => {
-  if (!existsSync(install.targetRoot)) return;
-  if (readdirSync(install.targetRoot).length === 0) return;
-  throw new Error(`Extension already exists: ${install.targetRoot}. Delete it manually first.`);
+  if (!existsSync(install.absInstallFolder)) return;
+  if (readdirSync(install.absInstallFolder).length === 0) return;
+  throw new Error(
+    `Extension already exists: ${install.absInstallFolder}. Delete it manually first.`,
+  );
 };
 
 const createTmpInstall = (install: ResolvedInstall): TmpInstall => {
@@ -113,8 +115,8 @@ const assertDefaultConfigIsInsidePackage = (
 };
 
 const finalizeInstall = (install: TmpInstall): void => {
-  mkdirSync(path.dirname(install.targetRoot), { recursive: true });
-  renameSync(install.tmpRoot, install.targetRoot);
+  mkdirSync(path.dirname(install.absInstallFolder), { recursive: true });
+  renameSync(install.tmpRoot, install.absInstallFolder);
 };
 
 const cleanupTmpInstall = (install: TmpInstall): void => {

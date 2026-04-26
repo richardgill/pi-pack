@@ -64,9 +64,6 @@ export const packExtensionPackageForRegistry = (
   return { fileName, tarball: readFileSync(path.join(destinationRoot, fileName)) };
 };
 
-export const readText = (cwd: string, filePath: string): string =>
-  readFileSync(path.join(cwd, filePath), "utf8");
-
 const npmPack = (packageRoot: string, destinationRoot: string): string => {
   const result = spawnSync("npm", ["pack", "--pack-destination", destinationRoot], {
     cwd: packageRoot,

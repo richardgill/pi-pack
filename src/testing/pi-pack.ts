@@ -14,6 +14,7 @@ export type RunResult = {
 
 export type RunPiPackCommandOptions = {
   agentDir?: string;
+  cwd?: string;
   promptHandler?: PromptHandler;
 };
 
@@ -34,7 +35,7 @@ export const createPiPackTestRunner = (cwd: string): RunPiPackCommand => {
 
   return (command, options) =>
     runPiPack(
-      cwd,
+      options?.cwd ?? cwd,
       options?.agentDir ?? defaultAgentDir,
       parsePiPackCommand(command),
       options?.promptHandler,
@@ -48,7 +49,7 @@ export const parsePiPackCommand = (command: string): string[] => {
   return args;
 };
 
-export const runPiPack = async (
+const runPiPack = async (
   cwd: string,
   agentDir: string,
   args: string[],

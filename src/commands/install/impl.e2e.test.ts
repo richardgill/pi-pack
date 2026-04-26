@@ -5,22 +5,17 @@ import { readJson, writeJson } from "~/lib/json";
 import {
   createExtensionPackage,
   createPackageWithoutDefaultConfig,
-  readText,
 } from "~/testing/extension-package";
 import { withEnvVar } from "~/testing/env";
-import { expectPathExists, expectPathMissing } from "~/testing/fs";
-import { runPiPack } from "~/testing/pi-pack";
+import { expectFileTree } from "~/testing/fs";
 import { withTempDir } from "~/testing/temp-dir";
 
-const runInstall = async (cwd: string, agentDir: string, args: string[]) =>
-  runPiPack(cwd, agentDir, ["install", ...args]);
-
 test("pi-pack install installs a local package into pi's extensions dir", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createExtensionPackage(cwd, "files");
 
-    const result = await runInstall(cwd, agentDir, [source]);
+    const result = await run(`pi-pack install ${source}`);
 
     const extensionRoot = path.join(agentDir, "extensions", "files");
     expect(result.stdout).toBe(
@@ -32,37 +27,45 @@ test("pi-pack install installs a local package into pi's extensions dir", async 
         "",
       ].join("\n"),
     );
-    expect(readText(extensionRoot, "config.ts")).toBe('export default "files@1.0.0";\n');
-    expect(readJson(path.join(extensionRoot, "package.json"))).toMatchObject({
-      private: true,
-      type: "module",
-      pi: { extensions: ["./config.ts"] },
-      "pi-pack": { managed: true },
-      dependencies: { files: expect.any(String) },
+    expectFileTree(extensionRoot, {
+      files: {
+        "config.ts": 'export default "files@1.0.0";\n',
+        "package.json": {
+          json: {
+            private: true,
+            type: "module",
+            pi: { extensions: ["./config.ts"] },
+            "pi-pack": { managed: true },
+            dependencies: { files: expect.any(String) },
+          },
+        },
+        "pnpm-lock.yaml": true,
+        "node_modules/files/package.json": true,
+      },
+      missing: ["index.ts"],
     });
-    expectPathMissing(extensionRoot, "index.ts");
-    expectPathExists(extensionRoot, "pnpm-lock.yaml");
-    expectPathExists(extensionRoot, "node_modules/files/package.json");
   });
 });
 
 test("pi-pack install hides config edit instructions when the extension does not require edits", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createExtensionPackage(cwd, "files", "1.0.0", false);
 
-    const result = await runInstall(cwd, agentDir, [source]);
+    const result = await run(`pi-pack install ${source}`);
 
     const extensionRoot = path.join(agentDir, "extensions", "files");
     expect(result.stdout).toBe(
       ["Installed pi extension: files", `Location: ${extensionRoot}`, ""].join("\n"),
     );
-    expect(readText(extensionRoot, "config.ts")).toBe('export default "files@1.0.0";\n');
+    expectFileTree(extensionRoot, {
+      files: { "config.ts": 'export default "files@1.0.0";\n' },
+    });
   });
 });
 
 test("pi-pack install does not run package lifecycle scripts", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createExtensionPackage(cwd, "scripts");
     const scriptOutput = path.join(cwd, "postinstall-ran");
@@ -77,29 +80,35 @@ test("pi-pack install does not run package lifecycle scripts", async () => {
       scripts: { postinstall: "node postinstall.cjs" },
     });
 
-    await runInstall(cwd, agentDir, [source]);
+    await run(`pi-pack install ${source}`);
 
     expect(existsSync(scriptOutput)).toBe(false);
-    expectPathExists(agentDir, "extensions/scripts/node_modules/scripts/package.json");
+    expectFileTree(agentDir, {
+      files: { "extensions/scripts/node_modules/scripts/package.json": true },
+    });
   });
 });
 
 test("pi-pack install --as installs under a custom extension name", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createExtensionPackage(cwd, "files");
 
-    await runInstall(cwd, agentDir, [source, "--as", "baz"]);
+    await run(`pi-pack install ${source} --as baz`);
 
     const extensionRoot = path.join(agentDir, "extensions", "baz");
-    expect(readText(extensionRoot, "config.ts")).toBe('export default "files@1.0.0";\n');
-    expectPathExists(extensionRoot, "node_modules/files/package.json");
-    expectPathMissing(agentDir, "extensions/files");
+    expectFileTree(extensionRoot, {
+      files: {
+        "config.ts": 'export default "files@1.0.0";\n',
+        "node_modules/files/package.json": true,
+      },
+    });
+    expectFileTree(agentDir, { missing: ["extensions/files"] });
   });
 });
 
 test("pi-pack install --extension installs a package from a configured monorepo", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const repoRoot = path.join(cwd, "repo");
     writeJson(path.join(repoRoot, "package.json"), {
@@ -107,16 +116,20 @@ test("pi-pack install --extension installs a package from a configured monorepo"
     });
     createExtensionPackage(path.join(repoRoot, "packages"), "files");
 
-    await runInstall(cwd, agentDir, [repoRoot, "--extension", "files"]);
+    await run(`pi-pack install ${repoRoot} --extension files`);
 
     const extensionRoot = path.join(agentDir, "extensions", "files");
-    expect(readText(extensionRoot, "config.ts")).toBe('export default "files@1.0.0";\n');
-    expectPathExists(extensionRoot, "node_modules/files/package.json");
+    expectFileTree(extensionRoot, {
+      files: {
+        "config.ts": 'export default "files@1.0.0";\n',
+        "node_modules/files/package.json": true,
+      },
+    });
   });
 });
 
 test("pi-pack install --extension rejects configured folders that escape the source root", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const repoRoot = path.join(cwd, "repo");
     writeJson(path.join(repoRoot, "package.json"), {
@@ -124,82 +137,93 @@ test("pi-pack install --extension rejects configured folders that escape the sou
     });
     createExtensionPackage(path.join(cwd, "packages"), "files");
 
-    const result = await runInstall(cwd, agentDir, [repoRoot, "--extension", "files"]);
+    const result = await run(`pi-pack install ${repoRoot} --extension files`);
 
     expect(result.stderr).toContain(
       "pi-pack.extensions-folder must be a safe relative path: ../packages.",
     );
-    expectPathMissing(agentDir, "extensions/files");
+    expectFileTree(agentDir, { missing: ["extensions/files"] });
   });
 });
 
 test("pi-pack install resolves relative file sources against the command cwd", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     createExtensionPackage(cwd, "files");
 
-    await runInstall(cwd, agentDir, ["file:./files"]);
+    await run("pi-pack install file:./files");
 
     const extensionRoot = path.join(agentDir, "extensions", "files");
-    expect(readText(extensionRoot, "config.ts")).toBe('export default "files@1.0.0";\n');
-    expectPathExists(extensionRoot, "node_modules/files/package.json");
+    expectFileTree(extensionRoot, {
+      files: {
+        "config.ts": 'export default "files@1.0.0";\n',
+        "node_modules/files/package.json": true,
+      },
+    });
   });
 });
 
 test("pi-pack install expands home-relative filesystem sources", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const homeDir = path.join(cwd, "home");
     const agentDir = path.join(cwd, "agent");
     createExtensionPackage(path.join(homeDir, "code"), "files");
 
     await withEnvVar("HOME", homeDir, async () => {
-      await runInstall(cwd, agentDir, ["~/code/files"]);
+      await run("pi-pack install ~/code/files");
     });
 
     const extensionRoot = path.join(agentDir, "extensions", "files");
-    expect(readText(extensionRoot, "config.ts")).toBe('export default "files@1.0.0";\n');
-    expectPathExists(extensionRoot, "node_modules/files/package.json");
+    expectFileTree(extensionRoot, {
+      files: {
+        "config.ts": 'export default "files@1.0.0";\n',
+        "node_modules/files/package.json": true,
+      },
+    });
   });
 });
 
 test("pi-pack install --extension resolves relative file sources against the command cwd", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     writeJson(path.join(cwd, "repo", "package.json"), {
       "pi-pack": { "extensions-folder": "extensions" },
     });
     createExtensionPackage(path.join(cwd, "repo", "extensions"), "files");
 
-    await runInstall(cwd, agentDir, ["file:./repo", "--extension", "files"]);
+    await run("pi-pack install file:./repo --extension files");
 
     const extensionRoot = path.join(agentDir, "extensions", "files");
-    expect(readText(extensionRoot, "config.ts")).toBe('export default "files@1.0.0";\n');
-    expectPathExists(extensionRoot, "node_modules/files/package.json");
+    expectFileTree(extensionRoot, {
+      files: {
+        "config.ts": 'export default "files@1.0.0";\n',
+        "node_modules/files/package.json": true,
+      },
+    });
   });
 });
 
 test("pi-pack install --extension requires a configured extensions folder", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     writeJson(path.join(cwd, "repo", "package.json"), {});
     createExtensionPackage(path.join(cwd, "repo", "extensions"), "files");
 
-    const result = await runInstall(cwd, agentDir, ["./repo", "--extension", "files"]);
+    const result = await run("pi-pack install ./repo --extension files");
 
     expect(result.stderr).toContain("Missing pi-pack.extensions-folder");
-    expectPathMissing(agentDir, "extensions/files");
+    expectFileTree(agentDir, { missing: ["extensions/files"] });
   });
 });
 
 test("pi-pack install --extension rejects path-like extension names", async () => {
-  await withTempDir(async ({ cwd }) => {
-    const agentDir = path.join(cwd, "agent");
+  await withTempDir(async ({ cwd, run }) => {
     const repoRoot = path.join(cwd, "repo");
     writeJson(path.join(repoRoot, "package.json"), {
       "pi-pack": { "extensions-folder": "extensions" },
     });
 
-    const result = await runInstall(cwd, agentDir, [repoRoot, "--extension", "folder/files"]);
+    const result = await run(`pi-pack install ${repoRoot} --extension folder/files`);
 
     expect(result.stderr).toContain(
       "Extension name must be a single filesystem path segment: folder/files",
@@ -208,11 +232,9 @@ test("pi-pack install --extension rejects path-like extension names", async () =
 });
 
 test("pi-pack install --extension rejects sources without extension name support", async () => {
-  await withTempDir(async ({ cwd }) => {
-    const agentDir = path.join(cwd, "agent");
-
-    const npmResult = await runInstall(cwd, agentDir, ["npm:files", "--extension", "files"]);
-    const bareResult = await runInstall(cwd, agentDir, ["files", "--extension", "files"]);
+  await withTempDir(async ({ run }) => {
+    const npmResult = await run("pi-pack install npm:files --extension files");
+    const bareResult = await run("pi-pack install files --extension files");
 
     expect(npmResult.stderr).toContain(
       "--extension can only be used with git:, file:, or filesystem path sources.",
@@ -224,46 +246,44 @@ test("pi-pack install --extension rejects sources without extension name support
 });
 
 test("pi-pack install rejects package names that are unsafe extension names", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createExtensionPackage(cwd, "@rich/files");
 
-    const result = await runInstall(cwd, agentDir, [source]);
+    const result = await run(`pi-pack install ${source}`);
 
     expect(result.stderr).toContain(
       "Extension name must be a single filesystem path segment: @rich/files",
     );
-    expectPathMissing(agentDir, "extensions/files");
-    expectPathMissing(agentDir, "extensions/@rich/files");
+    expectFileTree(agentDir, { missing: ["extensions/files", "extensions/@rich/files"] });
   });
 });
 
 test("pi-pack install refuses to overwrite an existing extension", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createExtensionPackage(cwd, "files");
 
-    await runInstall(cwd, agentDir, [source]);
+    await run(`pi-pack install ${source}`);
 
-    const result = await runInstall(cwd, agentDir, [source]);
+    const result = await run(`pi-pack install ${source}`);
 
     expect(result.stderr).toContain("Delete it manually first");
     expect(result.stderr).not.toContain("Command failed, Error:");
     expect(result.stderr).not.toContain("\n    at ");
-    expect(readText(path.join(agentDir, "extensions", "files"), "config.ts")).toBe(
-      'export default "files@1.0.0";\n',
-    );
+    expectFileTree(path.join(agentDir, "extensions", "files"), {
+      files: { "config.ts": 'export default "files@1.0.0";\n' },
+    });
   });
 });
 
 test("pi-pack install --verbose shows stack traces for command failures", async () => {
-  await withTempDir(async ({ cwd }) => {
-    const agentDir = path.join(cwd, "agent");
+  await withTempDir(async ({ cwd, run }) => {
     const source = createExtensionPackage(cwd, "files");
 
-    await runInstall(cwd, agentDir, [source]);
+    await run(`pi-pack install ${source}`);
 
-    const result = await runInstall(cwd, agentDir, ["--verbose", source]);
+    const result = await run(`pi-pack install --verbose ${source}`);
 
     expect(result.stderr).toContain("Command failed, Error: Extension already exists");
     expect(result.stderr).toContain("\n    at ");
@@ -271,19 +291,19 @@ test("pi-pack install --verbose shows stack traces for command failures", async 
 });
 
 test("pi-pack install fails clearly when default config is missing", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createPackageWithoutDefaultConfig(cwd, "missing-config");
 
-    const result = await runInstall(cwd, agentDir, [source]);
+    const result = await run(`pi-pack install ${source}`);
 
     expect(result.stderr).toContain("Could not find default config");
-    expectPathMissing(agentDir, "extensions/missing-config");
+    expectFileTree(agentDir, { missing: ["extensions/missing-config"] });
   });
 });
 
 test("pi-pack install rejects default config paths that escape the package", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createExtensionPackage(cwd, "escape-config");
     const packageJson = readJson<Record<string, Record<string, string>>>(
@@ -295,17 +315,17 @@ test("pi-pack install rejects default config paths that escape the package", asy
       "pi-pack": { ...packageJson["pi-pack"], "default-config": "../secret.ts" },
     });
 
-    const result = await runInstall(cwd, agentDir, [source]);
+    const result = await run(`pi-pack install ${source}`);
 
     expect(result.stderr).toContain(
       "pi-pack.default-config must be a safe relative path: ../secret.ts.",
     );
-    expectPathMissing(agentDir, "extensions/escape-config");
+    expectFileTree(agentDir, { missing: ["extensions/escape-config"] });
   });
 });
 
 test("pi-pack install rejects symlinked default configs", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createExtensionPackage(cwd, "symlink-config");
     const defaultConfigPath = path.join(source, "src", "default-config.ts");
@@ -314,11 +334,11 @@ test("pi-pack install rejects symlinked default configs", async () => {
     rmSync(defaultConfigPath);
     symlinkSync(secretPath, defaultConfigPath);
 
-    const result = await runInstall(cwd, agentDir, [source]);
+    const result = await run(`pi-pack install ${source}`);
 
     expect(result.stderr).toContain(
       "Default config must be a regular file inside the package: ./src/default-config.ts",
     );
-    expectPathMissing(agentDir, "extensions/symlink-config");
+    expectFileTree(agentDir, { missing: ["extensions/symlink-config"] });
   });
 });

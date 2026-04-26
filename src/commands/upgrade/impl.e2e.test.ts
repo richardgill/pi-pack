@@ -9,18 +9,11 @@ import {
   packExtensionPackage,
   packExtensionPackageForRegistry,
   type PackedExtensionPackage,
-  readText,
   updateExtensionPackageVersion,
 } from "~/testing/extension-package";
 import { withEnvVar } from "~/testing/env";
-import { runPiPack } from "~/testing/pi-pack";
+import { expectFileTree } from "~/testing/fs";
 import { withTempDir } from "~/testing/temp-dir";
-
-const runInstall = async (cwd: string, agentDir: string, args: string[]) =>
-  runPiPack(cwd, agentDir, ["install", ...args]);
-
-const runUpgrade = async (cwd: string, agentDir: string, args: string[]) =>
-  runPiPack(cwd, agentDir, ["upgrade", ...args]);
 
 const readInstalledPackageVersion = (extensionRoot: string, packageName: string): string =>
   readJson<{ version: string }>(
@@ -135,15 +128,15 @@ const packRegistryVersion = (
 });
 
 test("pi-pack upgrade extension-name upgrades the installed dependency", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const packageRoot = createExtensionPackage(cwd, "files", "1.0.0");
     const source = packExtensionPackage(packageRoot, cwd);
-    await runInstall(cwd, agentDir, [source]);
+    await run(`pi-pack install ${source}`);
     updateExtensionPackageVersion(packageRoot, "files", "2.0.0");
     packExtensionPackage(packageRoot, cwd);
 
-    const result = await runUpgrade(cwd, agentDir, ["files"]);
+    const result = await run("pi-pack upgrade files");
 
     const extensionRoot = path.join(agentDir, "extensions", "files");
     expect(result.stdout).toContain("Upgraded files");
@@ -152,7 +145,7 @@ test("pi-pack upgrade extension-name upgrades the installed dependency", async (
 });
 
 test("pi-pack upgrade --bump upgrades to latest and rewrites dependency range", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const packageRoot = createExtensionPackage(cwd, "files", "1.0.0");
     const first = packRegistryVersion(packageRoot, cwd, "1.0.0");
@@ -161,15 +154,15 @@ test("pi-pack upgrade --bump upgrades to latest and rewrites dependency range", 
 
     await withPackageRegistry("files", [first, second], async (registryUrl) => {
       await withEnvVar("NPM_CONFIG_REGISTRY", registryUrl, async () => {
-        await runInstall(cwd, agentDir, ["npm:files@^1.0.0"]);
+        await run("pi-pack install npm:files@^1.0.0");
 
         const extensionRoot = path.join(agentDir, "extensions", "files");
-        const result = await runUpgrade(cwd, agentDir, ["--bump", "files"]);
+        const result = await run("pi-pack upgrade --bump files");
 
         expect(result.stdout).toContain("Upgraded files");
         expect(readInstalledPackageVersion(extensionRoot, "files")).toBe("2.0.0");
-        expect(readJson(path.join(extensionRoot, "package.json"))).toMatchObject({
-          dependencies: { files: "^2.0.0" },
+        expectFileTree(extensionRoot, {
+          files: { "package.json": { json: { dependencies: { files: "^2.0.0" } } } },
         });
       });
     });
@@ -177,20 +170,19 @@ test("pi-pack upgrade --bump upgrades to latest and rewrites dependency range", 
 });
 
 test("pi-pack upgrade selected extension names", async () => {
-  await withTempDir(async ({ cwd }) => {
-    const agentDir = path.join(cwd, "agent");
+  await withTempDir(async ({ cwd, run }) => {
     const filesRoot = createExtensionPackage(cwd, "files", "1.0.0");
     const tasksRoot = createExtensionPackage(cwd, "tasks", "1.0.0");
     const filesSource = packExtensionPackage(filesRoot, cwd);
     const tasksSource = packExtensionPackage(tasksRoot, cwd);
-    await runInstall(cwd, agentDir, [filesSource]);
-    await runInstall(cwd, agentDir, [tasksSource]);
+    await run(`pi-pack install ${filesSource}`);
+    await run(`pi-pack install ${tasksSource}`);
     updateExtensionPackageVersion(filesRoot, "files", "2.0.0");
     updateExtensionPackageVersion(tasksRoot, "tasks", "3.0.0");
     packExtensionPackage(filesRoot, cwd);
     packExtensionPackage(tasksRoot, cwd);
 
-    const result = await runUpgrade(cwd, agentDir, ["files", "tasks"]);
+    const result = await run("pi-pack upgrade files tasks");
 
     expect(result.stdout).toContain("Upgraded files");
     expect(result.stdout).toContain("Upgraded tasks");
@@ -198,39 +190,41 @@ test("pi-pack upgrade selected extension names", async () => {
 });
 
 test("pi-pack upgrade preserves the user's config.ts", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const packageRoot = createExtensionPackage(cwd, "files", "1.0.0");
     const source = packExtensionPackage(packageRoot, cwd);
-    await runInstall(cwd, agentDir, [source]);
+    await run(`pi-pack install ${source}`);
 
     const extensionRoot = path.join(agentDir, "extensions", "files");
     updateExtensionPackageVersion(packageRoot, "files", "2.0.0");
     packExtensionPackage(packageRoot, cwd);
 
-    const result = await runUpgrade(extensionRoot, agentDir, []);
+    const result = await run("pi-pack upgrade", { cwd: extensionRoot });
 
     expect(result.stdout).toContain("Upgraded files");
-    expect(readText(extensionRoot, "config.ts")).toBe('export default "files@1.0.0";\n');
+    expectFileTree(extensionRoot, {
+      files: { "config.ts": 'export default "files@1.0.0";\n' },
+    });
     expect(readInstalledPackageVersion(extensionRoot, "files")).toBe("2.0.0");
   });
 });
 
 test("pi-pack upgrade upgrades all installed extensions", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const filesRoot = createExtensionPackage(cwd, "files", "1.0.0");
     const tasksRoot = createExtensionPackage(cwd, "tasks", "1.0.0");
     const filesSource = packExtensionPackage(filesRoot, cwd);
     const tasksSource = packExtensionPackage(tasksRoot, cwd);
-    await runInstall(cwd, agentDir, [filesSource]);
-    await runInstall(cwd, agentDir, [tasksSource]);
+    await run(`pi-pack install ${filesSource}`);
+    await run(`pi-pack install ${tasksSource}`);
     updateExtensionPackageVersion(filesRoot, "files", "2.0.0");
     updateExtensionPackageVersion(tasksRoot, "tasks", "3.0.0");
     packExtensionPackage(filesRoot, cwd);
     packExtensionPackage(tasksRoot, cwd);
 
-    const result = await runUpgrade(cwd, agentDir, []);
+    const result = await run("pi-pack upgrade");
 
     expect(result.stdout).toContain("Upgraded files");
     expect(result.stdout).toContain("Upgraded tasks");
@@ -244,11 +238,11 @@ test("pi-pack upgrade upgrades all installed extensions", async () => {
 });
 
 test("pi-pack upgrade reports successes and failures", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const packageRoot = createExtensionPackage(cwd, "files", "1.0.0");
     const source = packExtensionPackage(packageRoot, cwd);
-    await runInstall(cwd, agentDir, [source]);
+    await run(`pi-pack install ${source}`);
     updateExtensionPackageVersion(packageRoot, "files", "2.0.0");
     packExtensionPackage(packageRoot, cwd);
 
@@ -260,7 +254,7 @@ test("pi-pack upgrade reports successes and failures", async () => {
       "pi-pack": { managed: true },
     });
 
-    const result = await runUpgrade(cwd, agentDir, []);
+    const result = await run("pi-pack upgrade");
 
     expect(result.stdout).toContain("Upgraded files");
     expect(result.stderr).toContain("Failed z-broken");
@@ -269,11 +263,11 @@ test("pi-pack upgrade reports successes and failures", async () => {
 });
 
 test("pi-pack upgrade skips extensions not managed by pi-pack", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const packageRoot = createExtensionPackage(cwd, "files", "1.0.0");
     const source = packExtensionPackage(packageRoot, cwd);
-    await runInstall(cwd, agentDir, [source]);
+    await run(`pi-pack install ${source}`);
     updateExtensionPackageVersion(packageRoot, "files", "2.0.0");
     packExtensionPackage(packageRoot, cwd);
 
@@ -285,7 +279,7 @@ test("pi-pack upgrade skips extensions not managed by pi-pack", async () => {
       dependencies: { "skill-task": "1.0.0" },
     });
 
-    const result = await runUpgrade(cwd, agentDir, []);
+    const result = await run("pi-pack upgrade");
 
     expect(result.stdout).toContain("Upgraded files");
     expect(result.stdout).not.toContain("skill-task");
@@ -293,17 +287,15 @@ test("pi-pack upgrade skips extensions not managed by pi-pack", async () => {
 });
 
 test("pi-pack upgrade errors when no extensions are installed", async () => {
-  await withTempDir(async ({ cwd }) => {
-    const agentDir = path.join(cwd, "agent");
-
-    const result = await runUpgrade(cwd, agentDir, []);
+  await withTempDir(async ({ run }) => {
+    const result = await run("pi-pack upgrade");
 
     expect(result.stderr).toContain("No installed extensions found");
   });
 });
 
 test("pi-pack upgrade rejects unmanaged extension names", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const unmanagedRoot = path.join(agentDir, "extensions", "skill-task");
     mkdirSync(unmanagedRoot, { recursive: true });
@@ -313,17 +305,15 @@ test("pi-pack upgrade rejects unmanaged extension names", async () => {
       dependencies: { "skill-task": "1.0.0" },
     });
 
-    const result = await runUpgrade(cwd, agentDir, ["skill-task"]);
+    const result = await run("pi-pack upgrade skill-task");
 
     expect(result.stderr).toContain(`Installed pi-pack extension not found: ${unmanagedRoot}`);
   });
 });
 
 test("pi-pack upgrade rejects unsafe extension names", async () => {
-  await withTempDir(async ({ cwd }) => {
-    const agentDir = path.join(cwd, "agent");
-
-    const result = await runUpgrade(cwd, agentDir, ["../outside"]);
+  await withTempDir(async ({ run }) => {
+    const result = await run("pi-pack upgrade ../outside");
 
     expect(result.stderr).toContain(
       "Extension name must be a single filesystem path segment: ../outside.",

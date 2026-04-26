@@ -3,111 +3,105 @@ import path from "node:path";
 import { expect, test } from "vite-plus/test";
 import { writeJson } from "~/lib/json";
 import { createExtensionPackage } from "~/testing/extension-package";
-import { expectPathExists, expectPathMissing } from "~/testing/fs";
-import { runPiPack } from "~/testing/pi-pack";
-import type { PromptInfo, PromptResponse } from "~/testing/prompt-testing-types";
+import { expectFileTree } from "~/testing/fs";
+import type { PromptHandler } from "~/testing/prompt-testing-types";
 import { withTempDir } from "~/testing/temp-dir";
 
-const runInstall = async (cwd: string, agentDir: string, args: string[]) =>
-  runPiPack(cwd, agentDir, ["install", ...args]);
-
-const runUninstall = async (
-  cwd: string,
-  agentDir: string,
-  args: string[],
-  promptHandler?: (prompt: PromptInfo) => PromptResponse,
-) => runPiPack(cwd, agentDir, ["uninstall", ...args], promptHandler);
-
 test("pi-pack uninstall interactively removes selected managed extensions", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const filesSource = createExtensionPackage(cwd, "files");
     const tasksSource = createExtensionPackage(cwd, "tasks");
-    await runInstall(cwd, agentDir, [filesSource]);
-    await runInstall(cwd, agentDir, [tasksSource]);
+    await run(`pi-pack install ${filesSource}`);
+    await run(`pi-pack install ${tasksSource}`);
     createUnmanagedExtension(agentDir, "manual");
 
-    const result = await runUninstall(cwd, agentDir, [], (prompt) => {
+    const promptHandler: PromptHandler = (prompt) => {
       if (prompt.type === "multiselect") {
         expect(prompt.options.map((option) => option.value)).toEqual(["files", "tasks"]);
         return ["files"];
       }
       if (prompt.type === "confirm") return true;
       throw new Error(`Unexpected prompt: ${prompt.type}`);
-    });
+    };
+    const result = await run("pi-pack uninstall", { promptHandler });
 
     expect(result.stdout).toContain("Will permanently delete:");
     expect(result.stdout).toContain("Removed files:");
-    expectPathMissing(agentDir, "extensions/files");
-    expectPathExists(agentDir, "extensions/tasks/config.ts");
-    expectPathExists(agentDir, "extensions/manual/package.json");
+    expectFileTree(agentDir, {
+      files: {
+        "extensions/tasks/config.ts": true,
+        "extensions/manual/package.json": true,
+      },
+      missing: ["extensions/files"],
+    });
   });
 });
 
 test("pi-pack uninstall keeps extensions when confirmation is rejected", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createExtensionPackage(cwd, "files");
-    await runInstall(cwd, agentDir, [source]);
+    await run(`pi-pack install ${source}`);
 
-    const result = await runUninstall(cwd, agentDir, ["files"], (prompt) => {
+    const promptHandler: PromptHandler = (prompt) => {
       if (prompt.type === "confirm") return false;
       throw new Error(`Unexpected prompt: ${prompt.type}`);
-    });
+    };
+    const result = await run("pi-pack uninstall files", { promptHandler });
 
     expect(result.stdout).toContain("No extensions uninstalled.");
-    expectPathExists(agentDir, "extensions/files/config.ts");
+    expectFileTree(agentDir, { files: { "extensions/files/config.ts": true } });
   });
 });
 
 test("pi-pack uninstall does not prompt when no managed extensions are installed", async () => {
-  await withTempDir(async ({ cwd }) => {
-    const agentDir = path.join(cwd, "agent");
-
-    const result = await runUninstall(cwd, agentDir, [], (prompt) => {
+  await withTempDir(async ({ run }) => {
+    const promptHandler: PromptHandler = (prompt) => {
       throw new Error(`Unexpected prompt: ${prompt.type}`);
-    });
+    };
+    const result = await run("pi-pack uninstall", { promptHandler });
 
     expect(result.stdout).toContain("No extensions uninstalled.");
   });
 });
 
 test("pi-pack uninstall --yes removes named extensions without prompting", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     const source = createExtensionPackage(cwd, "files");
-    await runInstall(cwd, agentDir, [source]);
+    await run(`pi-pack install ${source}`);
 
-    const result = await runUninstall(cwd, agentDir, ["files", "--yes"], (prompt) => {
+    const promptHandler: PromptHandler = (prompt) => {
       throw new Error(`Unexpected prompt: ${prompt.type}`);
-    });
+    };
+    const result = await run("pi-pack uninstall files --yes", { promptHandler });
 
     expect(result.stdout).toContain("Removed files:");
-    expectPathMissing(agentDir, "extensions/files");
+    expectFileTree(agentDir, { missing: ["extensions/files"] });
   });
 });
 
 test("pi-pack uninstall rejects unmanaged extension names", async () => {
-  await withTempDir(async ({ cwd }) => {
+  await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
     createUnmanagedExtension(agentDir, "manual");
 
-    const result = await runUninstall(cwd, agentDir, ["manual", "--yes"]);
+    const result = await run("pi-pack uninstall manual --yes");
 
     expect(result.stderr).toContain(
       `Installed pi-pack extension not found: ${path.join(agentDir, "extensions", "manual")}`,
     );
-    expectPathExists(agentDir, "extensions/manual/package.json");
+    expectFileTree(agentDir, { files: { "extensions/manual/package.json": true } });
   });
 });
 
 test("pi-pack uninstall errors without names or an interactive prompt", async () => {
-  await withTempDir(async ({ cwd }) => {
-    const agentDir = path.join(cwd, "agent");
+  await withTempDir(async ({ cwd, run }) => {
     const source = createExtensionPackage(cwd, "files");
-    await runInstall(cwd, agentDir, [source]);
+    await run(`pi-pack install ${source}`);
 
-    const result = await runUninstall(cwd, agentDir, []);
+    const result = await run("pi-pack uninstall");
 
     expect(result.stderr).toContain("Missing extension names");
   });
