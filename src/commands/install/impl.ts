@@ -2,7 +2,7 @@ import path from "node:path";
 import type { LocalContext } from "~/context";
 import type { VerboseFlags } from "~/lib/flags";
 import { INSTALLED_EXTENSION_CONFIG_FILE } from "~/lib/package-json";
-import { assertSafeExtensionName, resolvePiExtensionsRoot } from "~/lib/pi";
+import { assertSafeExtensionName, resolvePiExtensionsFolder } from "~/lib/pi";
 import { inferPackageName } from "~/lib/pnpm";
 import { installExtension, type InstallResult, type ResolvedInstall } from "./install";
 import { toPnpmDependency } from "./sources";
@@ -31,18 +31,18 @@ const resolveInstall = async (
   flags: InstallFlags,
   source: string,
 ): Promise<ResolvedInstall> => {
-  const dependency = await resolveDependency(context, flags, source);
-  const packageName = await inferPackageName(dependency);
-  const extensionName = flags.as ?? packageName;
-  assertSafeExtensionName(extensionName, "Use --as to choose a different name.");
-  const piExtensionsFolder = resolvePiExtensionsRoot();
+  const pnpmDependency = await resolveDependency(context, flags, source);
+  const packageName = await inferPackageName(pnpmDependency);
+  const installAs = flags.as ?? packageName;
+  assertSafeExtensionName(installAs, "Use --as to choose a different name.");
+  const piExtensionsFolder = resolvePiExtensionsFolder();
 
   return {
-    dependency,
+    pnpmDependency,
     packageName,
-    extensionName,
+    installAs,
     piExtensionsFolder,
-    targetRoot: path.join(piExtensionsFolder, extensionName),
+    absInstallFolder: path.join(piExtensionsFolder, installAs),
   };
 };
 
@@ -61,13 +61,13 @@ const printInstallSummary = (
   result: InstallResult,
 ): void => {
   const configInstructions = result.requiresConfigEdit
-    ? ["", `Edit config: ${path.join(install.targetRoot, INSTALLED_EXTENSION_CONFIG_FILE)}`]
+    ? ["", `Edit config: ${path.join(install.absInstallFolder, INSTALLED_EXTENSION_CONFIG_FILE)}`]
     : [];
 
   context.process.stdout.write(
     [
-      `Installed pi extension: ${install.extensionName}`,
-      `Location: ${install.targetRoot}`,
+      `Installed pi extension: ${install.installAs}`,
+      `Location: ${install.absInstallFolder}`,
       ...configInstructions,
       "",
     ].join("\n"),
