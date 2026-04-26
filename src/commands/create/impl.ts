@@ -19,6 +19,15 @@ export type CreateArgs = [name?: string];
 
 type CreateTarget = "extension" | "mono";
 
+type ExtensionCreateMode =
+  | { type: "standalone"; extensionRootParent: string }
+  | {
+      type: "monorepo";
+      extensionRootParent: string;
+      repoName: string;
+      repoRoot: string;
+    };
+
 type Prompts = ReturnType<typeof createPrompts>;
 
 const DEFAULT_EXTENSIONS_FOLDER = "extensions";
@@ -79,11 +88,14 @@ const runCreateExtension = async (
   if (extensionName === undefined) return;
   assertSafeExtensionName(extensionName);
 
-  const extensionRoot = resolveExtensionRoot(context.cwd, extensionName);
+  // This function can be run to create a standalone extension or inside a monorepo
+  // This call figures out which one it is
+  const mode = readExtensionCreateMode(context.cwd);
+  const extensionRoot = path.join(mode.extensionRootParent, extensionName);
   createExtension({
     extensionName,
     extensionRoot,
-    readmeContext: extensionReadmeContext(context.cwd),
+    readmeContext: mode,
   });
   writeExtensionCreateResult(context, extensionName, extensionRoot);
 };
@@ -203,21 +215,16 @@ const createFirstMonorepoExtensionRoot = (
   return extensionRoot;
 };
 
-const resolveExtensionRoot = (cwd: string, extensionName: string): string => {
-  const configured = readPiPackExtensionsFolderFromPackageRoot(cwd);
-  if (configured === undefined) return path.join(cwd, extensionName);
-  return path.join(cwd, configured, extensionName);
-};
+const readExtensionCreateMode = (packageRoot: string): ExtensionCreateMode => {
+  const extensionsFolder = readPiPackExtensionsFolderFromPackageRoot(packageRoot);
+  if (extensionsFolder === undefined)
+    return { type: "standalone", extensionRootParent: packageRoot };
 
-const extensionReadmeContext = (
-  cwd: string,
-): Parameters<typeof createExtension>[0]["readmeContext"] => {
-  const configured = readPiPackExtensionsFolderFromPackageRoot(cwd);
-  if (configured === undefined) return { type: "standalone" };
   return {
     type: "monorepo",
-    repoName: readPackageNameFromPackageRoot(cwd),
-    repoRoot: cwd,
+    extensionRootParent: path.join(packageRoot, extensionsFolder),
+    repoName: readPackageNameFromPackageRoot(packageRoot),
+    repoRoot: packageRoot,
   };
 };
 
