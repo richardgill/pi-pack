@@ -10,7 +10,7 @@ export const resolveExtensionRoot = (extensionName: string): string => {
 };
 
 export const assertSafeExtensionName = (extensionName: string, hint?: string): void => {
-  if (isSafeExtensionName(extensionName)) return;
+  if (isSafePathSegment(extensionName)) return;
   throw new Error(formatUnsafeExtensionNameError(extensionName, hint));
 };
 
@@ -18,5 +18,3 @@ const formatUnsafeExtensionNameError = (extensionName: string, hint?: string): s
   [`Extension name must be a single filesystem path segment: ${extensionName}.`, hint]
     .filter(Boolean)
     .join(" ");
-
-const isSafeExtensionName = (extensionName: string): boolean => isSafePathSegment(extensionName);
