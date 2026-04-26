@@ -1,7 +1,7 @@
 import { buildCommand } from "@stricli/core";
 import type { LocalContext } from "~/context";
 import { stringParser } from "~/lib/cli";
-import { runUserCommand } from "~/lib/command";
+import { runCliCommand } from "~/lib/command";
 import { verboseFlag } from "~/lib/flags";
 import type { InstallArgs, InstallFlags } from "./impl";
 import { runInstall } from "./impl";
@@ -38,6 +38,6 @@ export const installCommand = buildCommand<InstallFlags, InstallArgs, LocalConte
     brief: "Install an extension package",
   },
   func: async function (this: LocalContext, flags, source) {
-    return runUserCommand(this, () => runInstall(this, flags, source));
+    return runCliCommand(this, () => runInstall(this, flags, source));
   },
 });

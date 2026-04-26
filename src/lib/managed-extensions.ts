@@ -15,17 +15,12 @@ export type ManagedExtension = {
 
 export const listManagedExtensions = (): ManagedExtension[] => {
   const extensionsRoot = resolvePiExtensionsRoot();
-  if (!existsSync(extensionsRoot)) {
-    throw new Error(`No installed extensions found at ${extensionsRoot}`);
-  }
+  if (!existsSync(extensionsRoot)) return [];
 
-  const extensions = readdirSync(extensionsRoot, { withFileTypes: true })
+  return readdirSync(extensionsRoot, { withFileTypes: true })
     .filter((entry) => isManagedExtensionEntry(extensionsRoot, entry))
     .map((entry) => toManagedExtension(entry.name, path.join(extensionsRoot, entry.name)))
     .sort((a, b) => a.extensionName.localeCompare(b.extensionName));
-
-  if (extensions.length > 0) return extensions;
-  throw new Error(`No installed extensions found at ${extensionsRoot}`);
 };
 
 export const resolveManagedExtensions = (extensionNames: string[]): ManagedExtension[] =>

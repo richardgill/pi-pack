@@ -44,12 +44,15 @@ const chooseUninstallTargets = async (
 ): Promise<ManagedExtension[]> => {
   if (extensionNames.length > 0) return resolveManagedExtensions(extensionNames);
 
+  const extensions = listManagedExtensions();
+  if (extensions.length === 0) return [];
+
   const prompts = maybeCreatePrompts(context);
   if (prompts === undefined) {
     throw new Error("Missing extension names. Pass extension names on the command line.");
   }
 
-  return promptForUninstallTargets(prompts, listManagedExtensions());
+  return promptForUninstallTargets(prompts, extensions);
 };
 
 const promptForUninstallTargets = async (

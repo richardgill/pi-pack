@@ -1,7 +1,7 @@
 import { buildCommand } from "@stricli/core";
 import type { LocalContext } from "~/context";
 import { stringParser } from "~/lib/cli";
-import { runUserCommand } from "~/lib/command";
+import { runCliCommand } from "~/lib/command";
 import { verboseFlag } from "~/lib/flags";
 import type { UpgradeArgs, UpgradeFlags } from "./impl";
 import { runUpgrade } from "./impl";
@@ -30,6 +30,6 @@ export const upgradeCommand = buildCommand<UpgradeFlags, UpgradeArgs, LocalConte
     brief: "Upgrade installed extensions",
   },
   func: async function (this: LocalContext, flags, ...extensionNames) {
-    return runUserCommand(this, () => runUpgrade(this, flags, extensionNames));
+    return runCliCommand(this, () => runUpgrade(this, flags, extensionNames));
   },
 });

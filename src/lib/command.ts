@@ -25,7 +25,7 @@ export const runCommand = (command: string, args: string[], cwd: string): Promis
 
 type CommandAction = () => Promise<void> | void;
 
-export const runUserCommand = async (
+export const runCliCommand = async (
   context: LocalContext,
   action: CommandAction,
 ): Promise<void | Error> => {

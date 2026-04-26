@@ -60,6 +60,18 @@ test("pi-pack uninstall keeps extensions when confirmation is rejected", async (
   });
 });
 
+test("pi-pack uninstall does not prompt when no managed extensions are installed", async () => {
+  await withTempDir(async (cwd) => {
+    const agentDir = path.join(cwd, "agent");
+
+    const result = await runUninstall(cwd, agentDir, [], (prompt) => {
+      throw new Error(`Unexpected prompt: ${prompt.type}`);
+    });
+
+    expect(result.stdout).toContain("No extensions uninstalled.");
+  });
+});
+
 test("pi-pack uninstall --yes removes named extensions without prompting", async () => {
   await withTempDir(async (cwd) => {
     const agentDir = path.join(cwd, "agent");
@@ -92,6 +104,8 @@ test("pi-pack uninstall rejects unmanaged extension names", async () => {
 test("pi-pack uninstall errors without names or an interactive prompt", async () => {
   await withTempDir(async (cwd) => {
     const agentDir = path.join(cwd, "agent");
+    const source = createExtensionPackage(cwd, "files");
+    await runInstall(cwd, agentDir, [source]);
 
     const result = await runUninstall(cwd, agentDir, []);
 

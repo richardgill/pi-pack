@@ -1,7 +1,7 @@
 import { buildCommand } from "@stricli/core";
 import type { LocalContext } from "~/context";
 import { stringParser } from "~/lib/cli";
-import { runUserCommand } from "~/lib/command";
+import { runCliCommand } from "~/lib/command";
 import { verboseFlag } from "~/lib/flags";
 import type { UninstallArgs, UninstallFlags } from "./impl";
 import { runUninstall } from "./impl";
@@ -30,6 +30,6 @@ export const uninstallCommand = buildCommand<UninstallFlags, UninstallArgs, Loca
     brief: "Uninstall installed extensions",
   },
   func: async function (this: LocalContext, flags, ...extensionNames) {
-    return runUserCommand(this, () => runUninstall(this, flags, extensionNames));
+    return runCliCommand(this, () => runUninstall(this, flags, extensionNames));
   },
 });
