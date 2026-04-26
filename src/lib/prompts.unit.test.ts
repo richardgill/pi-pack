@@ -17,18 +17,42 @@ const createContext = (env: NodeJS.ProcessEnv, options: CreateContextOptions = {
     promptInput: { isTTY: options.isTTY },
   }) as unknown as LocalContext;
 
-test("canPrompt allows test prompt handlers in CI", () => {
-  expect(canPrompt(createContext({ CI: "true" }, { promptHandler }))).toBe(true);
-});
+type CanPromptCase = {
+  name: string;
+  env: NodeJS.ProcessEnv;
+  options: CreateContextOptions;
+  expected: boolean;
+};
 
-test("canPrompt rejects non-interactive CI without a prompt handler", () => {
-  expect(canPrompt(createContext({ CI: "true" }))).toBe(false);
-});
+const cases: CanPromptCase[] = [
+  {
+    name: "allows test prompt handlers in CI",
+    env: { CI: "true" },
+    options: { promptHandler },
+    expected: true,
+  },
+  {
+    name: "rejects non-interactive CI without a prompt handler",
+    env: { CI: "true" },
+    options: {},
+    expected: false,
+  },
+  {
+    name: "rejects AI agents even with an interactive input",
+    env: { CLAUDECODE: "1" },
+    options: { isTTY: true },
+    expected: false,
+  },
+  {
+    name: "allows interactive human terminals",
+    env: {},
+    options: { isTTY: true },
+    expected: true,
+  },
+];
 
-test("canPrompt rejects AI agents even with an interactive input", () => {
-  expect(canPrompt(createContext({ CLAUDECODE: "1" }, { isTTY: true }))).toBe(false);
-});
-
-test("canPrompt allows interactive human terminals", () => {
-  expect(canPrompt(createContext({}, { isTTY: true }))).toBe(true);
+cases.forEach(({ name, env, options, expected }) => {
+  test(`canPrompt ${name}`, () => {
+    expect(canPrompt(createContext(env, options))).toBe(expected);
+  });
 });
