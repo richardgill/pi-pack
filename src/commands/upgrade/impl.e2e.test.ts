@@ -262,6 +262,48 @@ test("pi-pack upgrade reports successes and failures", async () => {
   });
 });
 
+test("pi-pack upgrade rejects managed extensions with multiple dependencies", async () => {
+  await withTempDir(async ({ cwd, run }) => {
+    const agentDir = path.join(cwd, "agent");
+    const extensionRoot = path.join(agentDir, "extensions", "multi");
+    mkdirSync(extensionRoot, { recursive: true });
+    writeJson(path.join(extensionRoot, "package.json"), {
+      private: true,
+      type: "module",
+      dependencies: { files: "1.0.0", tasks: "1.0.0" },
+      "pi-pack": { managed: true },
+    });
+
+    const result = await run("pi-pack upgrade multi");
+
+    expect(result.stderr).toContain("Expected one dependency");
+    expect(result.stderr).toContain("found 2: files, tasks");
+  });
+});
+
+test("pi-pack upgrade rejects managed extensions with non-pi-pack dependencies", async () => {
+  await withTempDir(async ({ cwd, run }) => {
+    const agentDir = path.join(cwd, "agent");
+    const extensionRoot = path.join(agentDir, "extensions", "not-extension");
+    mkdirSync(path.join(extensionRoot, "node_modules", "not-extension"), { recursive: true });
+    writeJson(path.join(extensionRoot, "package.json"), {
+      private: true,
+      type: "module",
+      dependencies: { "not-extension": "1.0.0" },
+      "pi-pack": { managed: true },
+    });
+    writeJson(path.join(extensionRoot, "node_modules", "not-extension", "package.json"), {
+      name: "not-extension",
+      version: "1.0.0",
+      type: "module",
+    });
+
+    const result = await run("pi-pack upgrade not-extension");
+
+    expect(result.stderr).toContain("Expected dependency to be a pi-pack extension");
+  });
+});
+
 test("pi-pack upgrade skips extensions not managed by pi-pack", async () => {
   await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
