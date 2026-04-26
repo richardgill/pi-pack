@@ -4,7 +4,7 @@ import type { VerboseFlags } from "~/lib/flags";
 import { INSTALLED_EXTENSION_CONFIG_FILE } from "~/lib/package-json";
 import { toPnpmDependency } from "~/lib/install-source";
 import { assertSafeExtensionName, resolvePiExtensionsDir } from "~/lib/pi";
-import { inferPackageName } from "~/lib/pnpm";
+import { resolvePackageNameFromPnpmSource } from "~/lib/pnpm";
 import { installExtension, type InstallResult, type ResolvedInstall } from "./install";
 
 export type InstallFlags = VerboseFlags & {
@@ -31,8 +31,11 @@ const resolveInstall = async (
   flags: InstallFlags,
   source: string,
 ): Promise<ResolvedInstall> => {
-  const pnpmDependency = await resolveDependency(context, flags, source);
-  const packageName = await inferPackageName(pnpmDependency);
+  if (flags.extension !== undefined) {
+    assertSafeExtensionName(flags.extension);
+  }
+  const pnpmDependency = await toPnpmDependency(context.cwd, source, flags.extension);
+  const packageName = await resolvePackageNameFromPnpmSource(pnpmDependency);
   const installAs = flags.as ?? packageName;
   assertSafeExtensionName(installAs, "Use --as to choose a different name.");
   const piExtensionsDir = resolvePiExtensionsDir();
@@ -44,15 +47,6 @@ const resolveInstall = async (
     piExtensionsDir,
     absInstallDir: path.join(piExtensionsDir, installAs),
   };
-};
-
-const resolveDependency = async (
-  context: LocalContext,
-  flags: InstallFlags,
-  source: string,
-): Promise<string> => {
-  if (flags.extension !== undefined) assertSafeExtensionName(flags.extension);
-  return toPnpmDependency(context.cwd, source, flags.extension);
 };
 
 const printInstallSummary = (
