@@ -1,1 +1,1 @@
-export const parseString = (input: string): string => input;
+export const stringParser = (input: string): string => input;

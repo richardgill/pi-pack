@@ -5,8 +5,6 @@ export type VerboseFlags = {
   verbose?: boolean;
 };
 
-type CommandAction = () => Promise<void> | void;
-
 export const verboseFlag = {
   kind: "boolean",
   brief: "Show verbose logging",
@@ -15,7 +13,10 @@ export const verboseFlag = {
 
 export const runCommand = (command: string, args: string[], cwd: string): Promise<void> =>
   new Promise((resolve, reject) => {
-    const child = spawn(command, args, { cwd, stdio: ["ignore", "pipe", "pipe"] });
+    const child = spawn(command, args, {
+      cwd,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
     const stdout: Buffer[] = [];
     const stderr: Buffer[] = [];
 
@@ -31,6 +32,8 @@ export const runCommand = (command: string, args: string[], cwd: string): Promis
       reject(new Error(formatCommandError(command, args, code, stdout, stderr)));
     });
   });
+
+type CommandAction = () => Promise<void> | void;
 
 export const runUserCommand = async (
   context: LocalContext,

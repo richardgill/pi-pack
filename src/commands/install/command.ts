@@ -1,6 +1,6 @@
 import { buildCommand } from "@stricli/core";
 import type { LocalContext } from "~/context";
-import { parseString } from "~/lib/cli";
+import { stringParser } from "~/lib/cli";
 import { runUserCommand, verboseFlag } from "~/lib/command";
 import type { InstallArgs, InstallFlags } from "./impl";
 import { runInstall } from "./impl";
@@ -11,14 +11,14 @@ export const installCommand = buildCommand<InstallFlags, InstallArgs, LocalConte
       extension: {
         kind: "parsed",
         brief: "Install an extension from a configured monorepo",
-        parse: parseString,
+        parse: stringParser,
         optional: true,
       },
       as: {
         kind: "parsed",
         brief: "Install under a custom extension folder",
         placeholder: "extension-folder",
-        parse: parseString,
+        parse: stringParser,
         optional: true,
       },
       verbose: verboseFlag,
@@ -28,7 +28,7 @@ export const installCommand = buildCommand<InstallFlags, InstallArgs, LocalConte
       parameters: [
         {
           brief: "Source specifier for the extension package",
-          parse: parseString,
+          parse: stringParser,
         },
       ],
     },

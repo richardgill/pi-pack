@@ -1,6 +1,6 @@
 import { buildCommand } from "@stricli/core";
 import type { LocalContext } from "~/context";
-import { parseString } from "~/lib/cli";
+import { stringParser } from "~/lib/cli";
 import { runUserCommand, verboseFlag } from "~/lib/command";
 import type { CreateArgs, CreateFlags } from "./impl";
 import { runCreate } from "./impl";
@@ -11,7 +11,7 @@ export const createCommand = buildCommand<CreateFlags, CreateArgs, LocalContext>
       monoDir: {
         kind: "parsed",
         brief: "Set the monorepo extensions folder",
-        parse: parseString,
+        parse: stringParser,
         optional: true,
       },
       mono: {
@@ -26,7 +26,7 @@ export const createCommand = buildCommand<CreateFlags, CreateArgs, LocalContext>
       parameters: [
         {
           brief: "Extension package name to create",
-          parse: parseString,
+          parse: stringParser,
           optional: true,
         },
       ],

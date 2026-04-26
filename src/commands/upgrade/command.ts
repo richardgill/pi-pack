@@ -1,6 +1,6 @@
 import { buildCommand } from "@stricli/core";
 import type { LocalContext } from "~/context";
-import { parseString } from "~/lib/cli";
+import { stringParser } from "~/lib/cli";
 import { runUserCommand, verboseFlag } from "~/lib/command";
 import type { UpgradeArgs, UpgradeFlags } from "./impl";
 import { runUpgrade } from "./impl";
@@ -21,7 +21,7 @@ export const upgradeCommand = buildCommand<UpgradeFlags, UpgradeArgs, LocalConte
       parameter: {
         brief: "Extension name to upgrade",
         placeholder: "extension-name",
-        parse: parseString,
+        parse: stringParser,
       },
     },
   },
