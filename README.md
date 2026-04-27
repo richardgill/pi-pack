@@ -15,13 +15,13 @@ A packaging system for [pi](https://github.com/badlogic/pi-mono) extensions.
 pi-pack extensions are configured by calling a typescript function with extension options:
 
 ```ts
-// ~/.pi/agent/extensions/pi-pack-example/config.ts
+// ~/.pi/agent/extensions/fancy-extension/config.ts
 
-import { extension } from "pi-pack-example";
+import { extension } from "fancy-extension";
 
 export default extension({
-  commandName: "pi-pack-example",
-  message: "This extension was configured from config.ts.",
+  option1: "value",
+  option2: (x) => `${x + 1}`,
 });
 
 ```
