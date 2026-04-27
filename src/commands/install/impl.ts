@@ -1,10 +1,12 @@
 import path from "node:path";
 import type { LocalContext } from "~/context";
 import type { VerboseFlags } from "~/lib/flags";
+import { colors } from "~/lib/colors";
 import { INSTALLED_EXTENSION_CONFIG_FILE } from "~/lib/package-json";
 import { toPnpmDependency } from "~/lib/install-source";
 import { assertSafeExtensionName, resolvePiExtensionsDir } from "~/lib/pi";
 import { resolvePackageNameFromPnpmSource } from "~/lib/pnpm";
+import { createSpinner } from "~/lib/prompts";
 import { installExtension, type InstallResult, type ResolvedInstall } from "./install";
 
 export type InstallFlags = VerboseFlags & {
@@ -21,9 +23,29 @@ export const runInstall = async (
 ): Promise<void> => {
   const install = await resolveInstall(context, flags, source);
 
-  const result = await installExtension(install);
+  const result = await runInstallExtension(context, install);
 
   printInstallSummary(context, install, result);
+};
+
+const runInstallExtension = async (
+  context: LocalContext,
+  install: ResolvedInstall,
+): Promise<InstallResult> => {
+  const spinner = createSpinner(context);
+  spinner.start(`Installing pi extension: ${colors.accent(install.installAs)}`);
+  try {
+    const result = await installExtension(install);
+    spinner.stop(
+      `${colors.success("Installed")} pi extension: ${colors.accent(install.installAs)}`,
+    );
+    return result;
+  } catch (error) {
+    spinner.stop(
+      `${colors.failure("Failed")} to install pi extension: ${colors.accent(install.installAs)}`,
+    );
+    throw error;
+  }
 };
 
 const resolveInstall = async (
@@ -54,14 +76,15 @@ const printInstallSummary = (
   install: ResolvedInstall,
   result: InstallResult,
 ): void => {
+  const configPath = path.join(install.absInstallDir, INSTALLED_EXTENSION_CONFIG_FILE);
   const configInstructions = result.requiresConfigEdit
-    ? ["", `Edit config: ${path.join(install.absInstallDir, INSTALLED_EXTENSION_CONFIG_FILE)}`]
+    ? ["", `${colors.warning("Edit config:")} ${colors.pathText(configPath)}`]
     : [];
 
   context.process.stdout.write(
     [
-      `Installed pi extension: ${install.installAs}`,
-      `Location: ${install.absInstallDir}`,
+      `${colors.success("Installed")} pi extension: ${colors.accent(install.installAs)}`,
+      `${colors.label("Location:")} ${colors.pathText(install.absInstallDir)}`,
       ...configInstructions,
       "",
     ].join("\n"),

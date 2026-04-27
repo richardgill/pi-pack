@@ -1,6 +1,7 @@
 import path from "node:path";
 import type { LocalContext } from "~/context";
 import type { VerboseFlags } from "~/lib/flags";
+import { colors } from "~/lib/colors";
 import { assertSafeRelativePath, assertSafePathSegment } from "~/lib/path";
 import {
   readPackageNameFromPackageRoot,
@@ -228,7 +229,7 @@ const readExtensionCreateMode = (packageRoot: string): ExtensionCreateMode => {
 
 const writeExtensionCreateResult = (context: LocalContext, name: string, root: string): void => {
   context.process.stdout.write(
-    `\nCreated extension package ${name} at ${formatRelativePath(context.cwd, root)}\n`,
+    `\n${colors.success("Created")} extension package ${colors.accent(name)} at ${colors.pathText(formatRelativePath(context.cwd, root))}\n`,
   );
 };
 
@@ -239,12 +240,14 @@ const writeMonorepoCreateResult = (
 ): void => {
   const repoPath = formatRelativePath(context.cwd, repoRoot);
   if (firstExtensionRoot === undefined) {
-    context.process.stdout.write(`\nCreated extension monorepo:\n\n  Repo: ${repoPath}\n`);
+    context.process.stdout.write(
+      `\n${colors.success("Created")} extension monorepo:\n\n  ${colors.label("Repo:")} ${colors.pathText(repoPath)}\n`,
+    );
     return;
   }
 
   context.process.stdout.write(
-    `\nCreated extension monorepo:\n\n  Repo:            ${repoPath}\n  First extension: ${formatRelativePath(context.cwd, firstExtensionRoot)}\n`,
+    `\n${colors.success("Created")} extension monorepo:\n\n  ${colors.label("Repo:")}            ${colors.pathText(repoPath)}\n  ${colors.label("First extension:")} ${colors.pathText(formatRelativePath(context.cwd, firstExtensionRoot))}\n`,
   );
 };
 

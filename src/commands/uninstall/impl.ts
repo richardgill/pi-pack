@@ -1,6 +1,7 @@
 import { rmSync } from "node:fs";
 import type { LocalContext } from "~/context";
 import type { VerboseFlags } from "~/lib/flags";
+import { colors } from "~/lib/colors";
 import {
   listManagedExtensions,
   resolveManagedExtensions,
@@ -103,8 +104,10 @@ const removeExtensionDirs = (targets: ManagedExtension[]): void => {
 const printUninstallWarning = (context: LocalContext, targets: ManagedExtension[]): void => {
   context.process.stdout.write(
     [
-      "Will permanently delete:",
-      ...targets.map((target) => `- ${target.extensionName}: ${target.root}`),
+      colors.warning("Will permanently delete:"),
+      ...targets.map(
+        (target) => `- ${colors.failure(target.extensionName)}: ${colors.pathText(target.root)}`,
+      ),
       "",
     ].join("\n"),
   );
@@ -112,12 +115,18 @@ const printUninstallWarning = (context: LocalContext, targets: ManagedExtension[
 
 const printUninstallSummary = (context: LocalContext, targets: ManagedExtension[]): void => {
   context.process.stdout.write(
-    [...targets.map((target) => `Removed ${target.extensionName}: ${target.root}`), ""].join("\n"),
+    [
+      ...targets.map(
+        (target) =>
+          `${colors.success("Removed")} ${colors.accent(target.extensionName)}: ${colors.pathText(target.root)}`,
+      ),
+      "",
+    ].join("\n"),
   );
 };
 
 const printNoUninstall = (context: LocalContext): void => {
-  context.process.stdout.write("No extensions uninstalled.\n");
+  context.process.stdout.write(`${colors.muted("No extensions uninstalled.")}\n`);
 };
 
 const formatExtensionNames = (targets: ManagedExtension[]): string =>

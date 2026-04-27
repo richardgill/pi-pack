@@ -1,7 +1,7 @@
 import { expect, test } from "vite-plus/test";
 import type { LocalContext } from "~/context";
 import type { PromptHandler } from "~/testing/prompt-testing-types";
-import { canPrompt } from "./prompts";
+import { canPrompt, createSpinner } from "./prompts";
 
 const promptHandler: PromptHandler = () => "value";
 
@@ -55,4 +55,22 @@ cases.forEach(({ name, env, options, expected }) => {
   test(`canPrompt ${name}`, () => {
     expect(canPrompt(createContext(env, options))).toBe(expected);
   });
+});
+
+test("createSpinner is a no-op when prompts are unavailable", () => {
+  const spinner = createSpinner(createContext({ CI: "true" }));
+
+  expect(() => {
+    spinner.start("Working");
+    spinner.stop("Done");
+  }).not.toThrow();
+});
+
+test("createSpinner is a no-op for test prompt handlers", () => {
+  const spinner = createSpinner(createContext({}, { promptHandler }));
+
+  expect(() => {
+    spinner.start("Working");
+    spinner.stop("Done");
+  }).not.toThrow();
 });

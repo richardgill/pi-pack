@@ -22,12 +22,7 @@ export type UpgradeFailure = ManagedExtension & {
   error: unknown;
 };
 
-export type UpgradeBatchResult = {
-  results: UpgradeResult[];
-  failures: UpgradeFailure[];
-};
-
-type UpgradeOptions = {
+export type UpgradeOptions = {
   bump: boolean;
 };
 
@@ -38,25 +33,7 @@ type InstalledDependency = {
   isPiPackExtension: boolean;
 };
 
-export const upgradeExtensions = async (
-  managedExtensions: ManagedExtension[],
-  options: UpgradeOptions,
-): Promise<UpgradeBatchResult> => {
-  const results: UpgradeResult[] = [];
-  const failures: UpgradeFailure[] = [];
-
-  for (const extension of managedExtensions) {
-    try {
-      results.push(await upgradeExtension(extension, options));
-    } catch (error) {
-      failures.push({ ...extension, error });
-    }
-  }
-
-  return { results, failures };
-};
-
-const upgradeExtension = async (
+export const upgradeExtension = async (
   managedExtension: ManagedExtension,
   options: UpgradeOptions,
 ): Promise<UpgradeResult> => {

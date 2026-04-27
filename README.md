@@ -20,6 +20,7 @@ pi-pack extensions are configured by calling a typescript function with extensio
 import { extension } from "fancy-extension";
 
 export default extension({
+  // make edits here
   option1: "value",
   option2: (x) => `${x + 1}`,
 });
@@ -39,7 +40,7 @@ Or use directly without installing:
 npx pi-pack@latest
 ```
 
-### Installing extensions
+### Install an extension
 
 ```
 pi-pack install git:github.com/richardgill/pi-pack-example
@@ -62,7 +63,9 @@ export default piPackExample({
 
 [Example package](https://github.com/richardgill/pi-pack-example)
 
-### Installing pi-pack extensions
+
+
+## Installing pi-pack extensions
 
 ```bash
 # From npm
@@ -82,7 +85,7 @@ pi-pack install "~/code/my-extension-mono-repo" --extension "files"
 
 pi-pack uses [pnpm](https://pnpm.io) under the hood, and supports most of pnpm's [package sources](https://pnpm.io/package-sources).
 
-### Upgrading extensions
+## Upgrading extensions
 
 `pi-pack upgrade` upgrades installed extensions while preserving your local `config.ts` config.
 
@@ -100,7 +103,7 @@ pi-pack upgrade --bump
 pi-pack upgrade "extension-name" --bump
 ```
 
-### Uninstalling extensions
+## Uninstalling extensions
 
 ```bash
 pi-pack uninstall              # uninstall pi-pack extensions interactively
@@ -111,7 +114,7 @@ pi-pack uninstall files --yes  # skip confirmation
 Uninstall permanently deletes the extension dirs, including `config.ts`.
 Only pi-pack managed extensions are shown or removed.
 
-### What `pi-pack install` does
+## What `pi-pack install` does
 
 ```bash
 pi-pack install "git:github.com/richardgill/pi-pack-example"
@@ -130,6 +133,7 @@ Installs the extension to:
 import { piPackExample } from "pi-pack-example";
 
 export default piPackExample({
+  // user makes edits here
   commandName: "pi-pack-example",
   message: "This extension was configured from config.ts.",
 });
@@ -154,7 +158,7 @@ export default piPackExample({
 
 Extensions are installed via `pnpm`. 
 
-### Building an extension
+## Building an extension
 
 pi-pack extensions repos are simple npm packages:
 
@@ -162,7 +166,7 @@ pi-pack extensions repos are simple npm packages:
 - They provide a default config that will be copied into: `~/.pi/agent/extensions/<extension-name>/config.ts` 
 - They can bundle pi resources like skills, prompt templates, and themes
 
-#### Create an extension
+### Create an extension
 
 Run `pi-pack create` to create an extension.
 

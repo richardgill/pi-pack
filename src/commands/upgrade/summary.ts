@@ -1,4 +1,5 @@
 import type { LocalContext } from "~/context";
+import { colors, stderrColors } from "~/lib/colors";
 import type { DependencyUpgrade, UpgradeFailure, UpgradeResult } from "./runner";
 
 export const printUpgradeSummary = (context: LocalContext, results: UpgradeResult[]): void => {
@@ -13,22 +14,29 @@ export const printUpgradeFailures = (context: LocalContext, failures: UpgradeFai
 
 const formatUpgradeResult = (result: UpgradeResult): string =>
   [
-    `${result.changed ? "Upgraded" : "Checked"} ${result.extensionName}`,
-    `Root: ${result.root}`,
-    `Dependencies: ${result.dependencies.map(formatDependencyUpgrade).join(", ")}`,
+    `${formatUpgradeStatus(result.changed)} ${colors.accent(result.extensionName)}`,
+    `${colors.label("Root:")} ${colors.pathText(result.root)}`,
+    `${colors.label("Dependencies:")} ${result.dependencies.map(formatDependencyUpgrade).join(", ")}`,
   ].join("\n");
 
+const formatUpgradeStatus = (changed: boolean): string =>
+  changed ? colors.success("Upgraded") : colors.muted("Checked");
+
 const formatDependencyUpgrade = (dependency: DependencyUpgrade): string => {
+  const beforeVersion = dependency.beforeVersion ?? "unknown";
+  const afterVersion = dependency.afterVersion ?? "unknown";
   if (dependency.beforeVersion === dependency.afterVersion) {
-    return `${dependency.name} ${dependency.afterVersion ?? "unknown"}`;
+    return `${colors.accent(dependency.name)} ${colors.muted(afterVersion)}`;
   }
-  return `${dependency.name} ${dependency.beforeVersion ?? "unknown"} -> ${dependency.afterVersion ?? "unknown"}`;
+  return `${colors.accent(dependency.name)} ${colors.muted(beforeVersion)} -> ${colors.version(afterVersion)}`;
 };
 
 const formatUpgradeFailure = (failure: UpgradeFailure): string =>
-  [`Failed ${failure.extensionName}`, `Root: ${failure.root}`, errorMessage(failure.error)].join(
-    "\n",
-  );
+  [
+    `${stderrColors.failure("Failed")} ${stderrColors.accent(failure.extensionName)}`,
+    `${stderrColors.label("Root:")} ${stderrColors.pathText(failure.root)}`,
+    stderrColors.failure(errorMessage(failure.error)),
+  ].join("\n");
 
 const errorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;

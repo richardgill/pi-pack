@@ -30,6 +30,22 @@ export type Prompts = {
   outro: typeof clackPrompts.outro;
 };
 
+export type Spinner = {
+  start: (message?: string) => void;
+  stop: (message?: string) => void;
+};
+
+const NOOP_SPINNER: Spinner = {
+  start: () => {},
+  stop: () => {},
+};
+
+export const createSpinner = (context: LocalContext): Spinner => {
+  if (!canPrompt(context)) return NOOP_SPINNER;
+  if (context.promptHandler !== undefined) return NOOP_SPINNER;
+  return clackPrompts.spinner({ output: context.promptOutput });
+};
+
 export const maybeCreatePrompts = (context: LocalContext): Prompts | undefined => {
   if (!canPrompt(context)) return undefined;
   return createPrompts(context);
