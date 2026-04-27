@@ -8,7 +8,7 @@
 
 A packaging system for [pi](https://github.com/badlogic/pi-mono) extensions.
 
-pi-pack extensions are configured by calling a typescript function with extension options:
+pi-pack extensions are configured in `config.ts` by passing options to the extension’s TypeScript function:
 
 ```ts
 // ~/.pi/agent/extensions/fancy-extension/config.ts
@@ -37,7 +37,7 @@ pi-pack install git:github.com/richardgill/pi-pack-example
 
 Installs into: `~/.pi/agent/extensions/pi-pack-example`
 
-Edit the config to configure the extension:
+Customize the extension by editing its `config.ts`:
 
 ```ts
 // ~/.pi/agent/extensions/pi-pack-example/config.ts
@@ -70,7 +70,7 @@ pi-pack install "npm:foo-bar" --as "baz" # install into ~/.pi/agent/extensions/b
 
 # From local file system
 pi-pack install "~/code/my-extension"
-pi-pack install "~/code/my-extension-mono-repo" --extension "files"
+pi-pack install "~/code/my-extension-mono-repo" --extension "extension-name"
 ```
 
 pi-pack uses [pnpm](https://pnpm.io) under the hood, and supports most of pnpm's [package sources](https://pnpm.io/package-sources).
@@ -228,6 +228,8 @@ export const piPackExample = (options: PiPackExampleOptions = {}) => {
 
 #### Mono repo extensions
 
+[Example monorepo extension](https://github.com/richardgill/pi-pack-example-mono)
+
 One repo which includes multiple extensions
 
 ```txt
@@ -290,7 +292,7 @@ pi.on("resources_discover", () => ({
 
 pi-pack is inspired by neovim's packaging ecosystem where plugins are configured [directly in lua code](https://github.com/folke/snacks.nvim/blob/main/docs/scope.md) with full typing. 
 
-pi's extensions are powerful, but the built-in extension installation mechanism means every extension must have it's own config file and validation is handled manually. pi-pack uses the power of TypeScript to make configuring extensions easy.
+pi's extensions are powerful, but the built-in extension installation mechanism means every configurable extension must have it's own config file and validation. pi-pack uses the power of TypeScript to make configuring pi extensions easy.
 
 ## License
 
