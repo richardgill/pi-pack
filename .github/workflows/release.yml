@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  create-release-pr:
+    name: Create Release PR
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      should_publish: ${{ steps.changesets.outputs.hasChangesets == 'false' }}
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup
+
+      - name: Create Release Pull Request
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          title: "chore: release"
+          commit: "chore: release"
+          version: npm run changeset-version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get version for release
+        id: version
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+  publish:
+    name: Publish
+    needs: create-release-pr
+    if: needs.create-release-pr.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup
+
+      - name: Build package
+        run: npm run build
+        env:
+          PI_PACK_VERSION: ${{ needs.create-release-pr.outputs.version }}
+
+      - name: Publish to npm
+        run: npm run publish-package -- --mode=release --version=${{ needs.create-release-pr.outputs.version }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.create-release-pr.outputs.version }}
+          name: pi-pack v${{ needs.create-release-pr.outputs.version }}
+          body: |
+            ## pi-pack v${{ needs.create-release-pr.outputs.version }}
+
+            See [CHANGELOG](https://github.com/richardgill/pi-pack/blob/main/CHANGELOG.md) for details.
+
+            ```bash
+            npm install -g pi-pack
+            npx pi-pack --version
+            ```
+          draft: false
+          prerelease: ${{ contains(needs.create-release-pr.outputs.version, '-') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

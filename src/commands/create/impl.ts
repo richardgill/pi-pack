@@ -1,0 +1,257 @@
+import path from "node:path";
+import type { LocalContext } from "~/context";
+import type { VerboseFlags } from "~/lib/flags";
+import { colors } from "~/lib/colors";
+import { assertSafeRelativePath, assertSafePathSegment } from "~/lib/path";
+import {
+  readPackageNameFromPackageRoot,
+  readPiPackExtensionsDirFromPackageRoot,
+} from "~/lib/package-config";
+import { assertSafeExtensionName } from "~/lib/pi";
+import { createPrompts, maybeCreatePrompts } from "~/lib/prompts";
+import { createExtension, createMono } from "./scaffold";
+
+export type CreateFlags = VerboseFlags & {
+  mono?: boolean;
+  monoDir?: string;
+};
+
+export type CreateArgs = [name?: string];
+
+type CreateTarget = "extension" | "mono";
+
+type ExtensionCreateMode =
+  | { type: "standalone"; extensionRootParent: string }
+  | {
+      type: "monorepo";
+      extensionRootParent: string;
+      repoName: string;
+      repoRoot: string;
+    };
+
+type Prompts = ReturnType<typeof createPrompts>;
+
+const DEFAULT_EXTENSIONS_DIR = "extensions";
+const DEFAULT_EXTENSION_NAME_PREFIX = "pi-";
+
+export const runCreate = async (
+  context: LocalContext,
+  flags: CreateFlags,
+  name?: string,
+): Promise<void> => {
+  const prompts = maybeCreatePrompts(context);
+  const isMonorepoMode = await readMonorepoMode(prompts, flags, context.cwd, name);
+  if (isMonorepoMode === undefined) return;
+  if (isMonorepoMode) return runCreateMonorepo(context, flags, prompts, name);
+
+  return runCreateExtension(context, prompts, name);
+};
+
+const runCreateMonorepo = async (
+  context: LocalContext,
+  flags: CreateFlags,
+  prompts: Prompts | undefined,
+  name?: string,
+): Promise<void> => {
+  const repoName = await readRepoName(prompts, name);
+  if (repoName === undefined) return;
+  assertSafePathSegment(repoName, "Repo name");
+
+  const extensionsDir = await readExtensionsDir(prompts, flags);
+  if (extensionsDir === undefined) return;
+  assertSafeRelativePath(extensionsDir, "Extensions dir");
+
+  const firstExtensionName = await readFirstMonorepoExtensionName(prompts);
+  if (prompts !== undefined && firstExtensionName === undefined) return;
+  if (firstExtensionName !== undefined) assertSafeExtensionName(firstExtensionName);
+
+  const monoRoot = path.join(context.cwd, repoName);
+  createMono({
+    cwd: context.cwd,
+    repoName,
+    extensionsDir,
+    firstExtensionName,
+  });
+  const firstExtensionRoot = createFirstMonorepoExtensionRoot(
+    monoRoot,
+    extensionsDir,
+    firstExtensionName,
+  );
+  writeMonorepoCreateResult(context, monoRoot, firstExtensionRoot);
+};
+
+const runCreateExtension = async (
+  context: LocalContext,
+  prompts: Prompts | undefined,
+  name?: string,
+): Promise<void> => {
+  const extensionName = await readExtensionName(prompts, name);
+  if (extensionName === undefined) return;
+  assertSafeExtensionName(extensionName);
+
+  // This function can be run to create a standalone extension or inside a monorepo
+  // This call figures out which one it is
+  const mode = readExtensionCreateMode(context.cwd);
+  const extensionRoot = path.join(mode.extensionRootParent, extensionName);
+  createExtension({
+    extensionName,
+    extensionRoot,
+    readmeContext: mode,
+  });
+  writeExtensionCreateResult(context, extensionName, extensionRoot);
+};
+
+const readMonorepoMode = async (
+  prompts: Prompts | undefined,
+  flags: CreateFlags,
+  cwd: string,
+  name?: string,
+): Promise<boolean | undefined> => {
+  if (flags.mono === true || flags.monoDir !== undefined) return true;
+  if (name !== undefined || readPiPackExtensionsDirFromPackageRoot(cwd) !== undefined) return false;
+  if (prompts === undefined)
+    throw new Error("Usage: pi-pack create <name> or pi-pack create --mono <repo>");
+
+  const target = await promptForCreateTarget(prompts);
+  if (prompts.isCancel(target)) return undefined;
+  return target === "mono";
+};
+
+const readRepoName = async (
+  prompts: Prompts | undefined,
+  name?: string,
+): Promise<string | undefined> => {
+  if (name !== undefined) return name;
+  if (prompts === undefined) throw new Error("Missing repo name.");
+
+  const repoName = await prompts.text({
+    message: "Repo name",
+    placeholder: "pi-extensions",
+  });
+  if (prompts.isCancel(repoName)) return undefined;
+  return repoName;
+};
+
+const readExtensionName = async (
+  prompts: Prompts | undefined,
+  name?: string,
+): Promise<string | undefined> => {
+  if (name !== undefined) return name;
+  if (prompts === undefined) throw new Error("Missing extension name.");
+
+  const extensionName = await prompts.text({
+    message: "Extension name. e.g. pi-preset",
+    placeholder: DEFAULT_EXTENSION_NAME_PREFIX,
+    initialValue: DEFAULT_EXTENSION_NAME_PREFIX,
+  });
+  if (prompts.isCancel(extensionName)) return undefined;
+  return extensionName;
+};
+
+const readExtensionsDir = async (
+  prompts: Prompts | undefined,
+  flags: CreateFlags,
+): Promise<string | undefined> => {
+  if (flags.monoDir !== undefined) return flags.monoDir;
+  if (prompts === undefined) return DEFAULT_EXTENSIONS_DIR;
+
+  const dir = await prompts.text({
+    message: "Extensions dir",
+    placeholder: DEFAULT_EXTENSIONS_DIR,
+    initialValue: DEFAULT_EXTENSIONS_DIR,
+  });
+  if (prompts.isCancel(dir)) return undefined;
+  return dir;
+};
+
+const readFirstMonorepoExtensionName = async (
+  prompts: Prompts | undefined,
+): Promise<string | undefined> => {
+  if (prompts === undefined) return undefined;
+
+  const extensionName = await prompts.text({
+    message: "First extension name. e.g. pi-preset",
+    placeholder: DEFAULT_EXTENSION_NAME_PREFIX,
+    initialValue: DEFAULT_EXTENSION_NAME_PREFIX,
+  });
+  if (prompts.isCancel(extensionName)) return undefined;
+  return extensionName;
+};
+
+const promptForCreateTarget = async (prompts: Prompts): Promise<CreateTarget | symbol> => {
+  const target = await prompts.select({
+    message: "What do you want to create?",
+    options: [
+      { value: "extension", label: "Single extension" },
+      {
+        value: "mono",
+        label: "Extension monorepo (multiple extensions in a single repo)",
+      },
+    ],
+  });
+
+  if (prompts.isCancel(target)) return target;
+  if (target === "mono") return "mono";
+  return "extension";
+};
+
+const createFirstMonorepoExtensionRoot = (
+  monoRoot: string,
+  extensionsDir: string,
+  extensionName: string | undefined,
+): string | undefined => {
+  if (extensionName === undefined) return undefined;
+
+  const extensionRoot = path.join(monoRoot, extensionsDir, extensionName);
+  createExtension({
+    extensionName,
+    extensionRoot,
+    readmeContext: {
+      type: "monorepo",
+      repoName: path.basename(monoRoot),
+      repoRoot: monoRoot,
+    },
+  });
+  return extensionRoot;
+};
+
+const readExtensionCreateMode = (packageRoot: string): ExtensionCreateMode => {
+  const extensionsDir = readPiPackExtensionsDirFromPackageRoot(packageRoot);
+  if (extensionsDir === undefined) return { type: "standalone", extensionRootParent: packageRoot };
+
+  return {
+    type: "monorepo",
+    extensionRootParent: path.join(packageRoot, extensionsDir),
+    repoName: readPackageNameFromPackageRoot(packageRoot),
+    repoRoot: packageRoot,
+  };
+};
+
+const writeExtensionCreateResult = (context: LocalContext, name: string, root: string): void => {
+  context.process.stdout.write(
+    `\n${colors.success("Created")} extension package ${colors.accent(name)} at ${colors.pathText(formatRelativePath(context.cwd, root))}\n`,
+  );
+};
+
+const writeMonorepoCreateResult = (
+  context: LocalContext,
+  repoRoot: string,
+  firstExtensionRoot?: string,
+): void => {
+  const repoPath = formatRelativePath(context.cwd, repoRoot);
+  if (firstExtensionRoot === undefined) {
+    context.process.stdout.write(
+      `\n${colors.success("Created")} extension monorepo:\n\n  ${colors.label("Repo:")} ${colors.pathText(repoPath)}\n`,
+    );
+    return;
+  }
+
+  context.process.stdout.write(
+    `\n${colors.success("Created")} extension monorepo:\n\n  ${colors.label("Repo:")}            ${colors.pathText(repoPath)}\n  ${colors.label("First extension:")} ${colors.pathText(formatRelativePath(context.cwd, firstExtensionRoot))}\n`,
+  );
+};
+
+const formatRelativePath = (from: string, to: string): string => {
+  const relativePath = path.relative(from, to) || ".";
+  return relativePath.startsWith(".") ? relativePath : `./${relativePath}`;
+};
