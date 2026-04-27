@@ -1,5 +1,11 @@
 # pi-pack
 
+## 0.0.5
+
+### Patch Changes
+
+- [`10d6227`](https://github.com/richardgill/pi-pack/commit/10d62272531ed6747266e2cece3157f420688c66) Thanks [@richardgill](https://github.com/richardgill)! - Patch release.
+
 ## 0.0.4
 
 ### Patch Changes
