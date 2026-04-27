@@ -290,7 +290,7 @@ pi.on("resources_discover", () => ({
 
 pi-pack is inspired by neovim's packaging ecosystem where plugins are configured [directly in lua code](https://github.com/folke/snacks.nvim/blob/main/docs/scope.md) with full typing. 
 
-pi's extensions are powerful, but the built-in extension installation mechanism means every extension must have it's own config file and validation is handled manually. pi-pack uses the power of TypeScript to make configuring extensions easy.
+pi's extensions are powerful, but the built-in extension installation mechanism means every configurable extension must have it's own config file and validation. pi-pack uses the power of TypeScript to make configuring pi extensions easy.
 
 ## License
 
