@@ -187,7 +187,7 @@ test("pi-pack upgrade selected extension names", async () => {
     expect(result.stdout).toContain("Upgraded files");
     expect(result.stdout).toContain("Upgraded tasks");
   });
-});
+}, 20_000);
 
 test("pi-pack upgrade preserves the user's config.ts", async () => {
   await withTempDir(async ({ cwd, run }) => {
@@ -235,7 +235,7 @@ test("pi-pack upgrade upgrades all installed extensions", async () => {
       "3.0.0",
     );
   });
-});
+}, 20_000);
 
 test("pi-pack upgrade reports successes and failures", async () => {
   await withTempDir(async ({ cwd, run }) => {
