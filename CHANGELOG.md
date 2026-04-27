@@ -1,5 +1,11 @@
 # pi-pack
 
+## 0.0.7
+
+### Patch Changes
+
+- [#15](https://github.com/richardgill/pi-pack/pull/15) [`b61487d`](https://github.com/richardgill/pi-pack/commit/b61487d3bb4d68d72486995e6b2c7e73669b3985) Thanks [@richardgill](https://github.com/richardgill)! - Add README link to the monorepo example extension.
+
 ## 0.0.6
 
 ### Patch Changes
