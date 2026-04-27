@@ -68,15 +68,15 @@ export default piPackExample({
 ## Installing pi-pack extensions
 
 ```bash
-# From npm
-pi-pack install "npm:foo-bar"
-pi-pack install "npm:foo-bar@1.0.0" # pin version
-pi-pack install "npm:foo-bar" --as "baz" # install into ~/.pi/agent/extensions/baz
-
 # From github repo
 pi-pack install "git:github.com/user/repo"
 pi-pack install "git:github.com/user/repo@v1" # pin git ref: tag, branch, or commit
 pi-pack install "git:github.com/user/mono-repo" --extension "extension-name" # from a github monorepo
+
+# From npm
+pi-pack install "npm:foo-bar"
+pi-pack install "npm:foo-bar@1.0.0" # pin version
+pi-pack install "npm:foo-bar" --as "baz" # install into ~/.pi/agent/extensions/baz
 
 # From local file system
 pi-pack install "~/code/my-extension"
