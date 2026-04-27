@@ -4,21 +4,25 @@ on:
   workflow_run:
     workflows: [CI]
     types: [completed]
-    branches: [main]
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.workflow_run.event }}-${{ github.event.workflow_run.head_repository.full_name }}-${{ github.event.workflow_run.head_branch || github.event.workflow_run.id }}
   cancel-in-progress: true
 
 jobs:
   create-release-pr:
     name: Create Release PR
-    if: github.event.workflow_run.conclusion == 'success'
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     outputs:
       should_publish: ${{ steps.changesets.outputs.hasChangesets == 'false' }}
       version: ${{ steps.version.outputs.version }}
@@ -89,3 +93,158 @@ jobs:
           prerelease: ${{ contains(needs.create-release-pr.outputs.version, '-') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-pr-preview:
+    name: Build PR preview
+    # Only same-repo PRs may publish previews; forks can run CI but must not receive npm OIDC publishing privileges.
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      artifact_name: ${{ steps.preview.outputs.artifact_name }}
+      pr_number: ${{ steps.preview.outputs.pr_number }}
+      short_sha: ${{ steps.preview.outputs.short_sha }}
+      tag: ${{ steps.preview.outputs.tag }}
+      version: ${{ steps.preview.outputs.version }}
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - uses: ./.github/actions/setup
+
+      - name: Get preview metadata
+        id: preview
+        env:
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+        run: |
+          if [ -z "$PR_NUMBER" ]; then
+            echo "Could not resolve PR number from workflow_run event" >&2
+            exit 1
+          fi
+
+          BASE_VERSION=$(node -p "require('./package.json').version")
+          SHORT_SHA=${HEAD_SHA::7}
+          VERSION="${BASE_VERSION}-pr.${PR_NUMBER}.${SHORT_SHA}"
+          ARTIFACT_NAME="npm-preview-${PR_NUMBER}-${SHORT_SHA}"
+          echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "tag=pr-${PR_NUMBER}" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build package
+        run: npm run build
+        env:
+          PI_PACK_VERSION: ${{ steps.preview.outputs.version }}
+
+      - name: Pack preview
+        id: pack
+        run: |
+          npm pkg set "version=${{ steps.preview.outputs.version }}"
+          mkdir -p overlay/npm-preview
+          TARBALL=$(npm pack --pack-destination overlay/npm-preview)
+          echo "tarball=overlay/npm-preview/$TARBALL" >> $GITHUB_OUTPUT
+
+      - name: Upload preview package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.preview.outputs.artifact_name }}
+          path: ${{ steps.pack.outputs.tarball }}
+          if-no-files-found: error
+
+  publish-pr-preview:
+    name: Publish PR preview
+    # Do not checkout or execute PR-controlled code here; this job has id-token: write for npm trusted publishing.
+    needs: build-pr-preview
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+      pull-requests: write
+
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Download preview package
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-pr-preview.outputs.artifact_name }}
+          path: overlay/npm-preview
+
+      - name: Validate preview package
+        id: validate
+        env:
+          EXPECTED_NAME: pi-pack
+          EXPECTED_VERSION: ${{ needs.build-pr-preview.outputs.version }}
+        run: |
+          TARBALL_COUNT=$(find overlay/npm-preview -maxdepth 1 -name "*.tgz" | wc -l)
+          if [ "$TARBALL_COUNT" -ne 1 ]; then
+            echo "Expected exactly one package tarball, found $TARBALL_COUNT" >&2
+            exit 1
+          fi
+
+          TARBALL=$(find overlay/npm-preview -maxdepth 1 -name "*.tgz" -print -quit)
+          mkdir -p overlay/npm-preview/extract
+          tar -xzf "$TARBALL" -C overlay/npm-preview/extract
+
+          node --input-type=commonjs <<'NODE'
+          const { readFileSync } = require("node:fs");
+          const pkg = JSON.parse(readFileSync("overlay/npm-preview/extract/package/package.json", "utf8"));
+
+          if (pkg.name !== process.env.EXPECTED_NAME) {
+            throw new Error(`Expected package name ${process.env.EXPECTED_NAME}, got ${pkg.name}`);
+          }
+
+          if (pkg.version !== process.env.EXPECTED_VERSION) {
+            throw new Error(`Expected package version ${process.env.EXPECTED_VERSION}, got ${pkg.version}`);
+          }
+          NODE
+
+          echo "tarball=$TARBALL" >> $GITHUB_OUTPUT
+
+      - name: Publish preview to npm
+        env:
+          VERSION: ${{ needs.build-pr-preview.outputs.version }}
+          TAG: ${{ needs.build-pr-preview.outputs.tag }}
+          TARBALL: ${{ steps.validate.outputs.tarball }}
+        run: |
+          if npm view "pi-pack@$VERSION" version --registry https://registry.npmjs.org/ >/dev/null 2>&1; then
+            echo "pi-pack@$VERSION already published, skipping"
+            exit 0
+          fi
+
+          npm publish "$TARBALL" --access public --tag "$TAG" --ignore-scripts --registry https://registry.npmjs.org/
+
+      - name: Post PR comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ needs.build-pr-preview.outputs.pr_number }}
+          header: pr-build
+          message: |
+            ## 🔨 PR Build Ready!
+
+            | | |
+            |---|---|
+            | **Commit** | `${{ needs.build-pr-preview.outputs.short_sha }}` |
+            | **Version** | `${{ needs.build-pr-preview.outputs.version }}` |
+
+            ### Install preview
+
+            ```bash
+            npm install -g pi-pack@${{ needs.build-pr-preview.outputs.tag }}
+            npx pi-pack@${{ needs.build-pr-preview.outputs.tag }} --version
+            ```
+
+            <sub>🤖 This comment updates automatically with each push.</sub>
