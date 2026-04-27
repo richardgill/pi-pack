@@ -228,6 +228,8 @@ export const piPackExample = (options: PiPackExampleOptions = {}) => {
 
 #### Mono repo extensions
 
+[Example monorepo extension](https://github.com/richardgill/pi-pack-example-mono)
+
 One repo which includes multiple extensions
 
 ```txt
