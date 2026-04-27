@@ -31,25 +31,25 @@ npx pi-pack@latest
 ### Installing extensions
 
 ```
-pi-pack install git:github.com/richardgill/pi-presets
+pi-pack install git:github.com/richardgill/pi-pack-example
 ```
-Installs into: `~/.pi/agent/extensions/presets`
 
-Edit the default config to configure the extension:
+Installs into: `~/.pi/agent/extensions/pi-pack-example`
+
+Edit the config to configure the extension:
 
 ```ts
-// ~/.pi/agent/extensions/presets/config.ts
+// ~/.pi/agent/extensions/pi-pack-example/config.ts
 
-import { presets } from 'presets'
+import { piPackExample } from "pi-pack-example";
 
-export default presets({
-  // configure the extension here
-  // todo: fix me
-  option: 'default-option'
-})
-
+export default piPackExample({
+  commandName: "pi-pack-example",
+  message: "This extension was configured from config.ts.",
+});
 ```
 
+[Example package](https://github.com/richardgill/pi-pack-example)
 
 ### Installing pi-pack extensions
 
@@ -70,6 +70,7 @@ pi-pack install "~/code/my-extension-mono-repo" --extension "files"
 ```
 
 pi-pack uses [pnpm](https://pnpm.io) under the hood, and supports most of pnpm's [package sources](https://pnpm.io/package-sources).
+
 ### Upgrading extensions
 
 `pi-pack upgrade` upgrades installed extensions while preserving your local `config.ts` config.
@@ -115,11 +116,12 @@ Installs the extension to:
 ```ts
 // config.ts
 
-import { piPackExample } from 'pi-pack-example'
+import { piPackExample } from "pi-pack-example";
 
 export default piPackExample({
-  option: 'default-option'
-})
+  commandName: "pi-pack-example",
+  message: "This extension was configured from config.ts.",
+});
 ```
 
 ```json5
@@ -147,6 +149,7 @@ pi-pack extensions repos are simple npm packages:
 
 - They export a function users will call to configure the extension 
 - They provide a default config that will be copied into: `~/.pi/agent/extensions/<extension-name>/config.ts` 
+- They can bundle pi resources like skills, prompt templates, and themes
 
 #### Create an extension
 
@@ -156,25 +159,27 @@ Run `pi-pack create` to create an extension.
 
 #### Single repo extensions
 
+[Example repo](https://github.com/richardgill/pi-pack-example)
+
 ```txt
 repo/
-    ├── package.json
-    └── src/
-        ├── extension.ts
-        └── default-config.ts
+├── package.json
+└── src/
+    ├── extension.ts
+    └── default-config.ts
 ```
 
 ```json5
 // package.json
 {
-  "name": "files",
+  "name": "pi-pack-example",
   "type": "module",
   "exports": {
     ".": "./src/extension.ts"
   },
   "keywords": ["pi-package"],
   "pi-pack": {
-    // copied to user's ~/.pi/agent/extensions/files/config.ts when they install
+    // copied to user's ~/.pi/agent/extensions/pi-pack-example/config.ts when they install
     "default-config": "./src/default-config.ts",
     // set false if users normally do not need to edit config.ts after install
     "requires-config-edit": true
@@ -187,7 +192,7 @@ repo/
 When `true`, `pi-pack install` prints:
 
 ```txt
-Edit config: ~/.pi/agent/extensions/files/config.ts
+Edit config: ~/.pi/agent/extensions/pi-pack-example/config.ts
 ```
 
 Set it to `false` for extensions that work out of the box and do not need user edits to `config.ts`:
@@ -201,34 +206,38 @@ Set it to `false` for extensions that work out of the box and do not need user e
 
 ```ts
 // ./src/default-config.ts
-import { extension } from "files";
+import { piPackExample } from "pi-pack-example";
 
-export default extension({
-  commandName: "files",
+export default piPackExample({
+  commandName: "pi-pack-example",
+  message: "This extension was configured from config.ts.",
 });
 ```
 
 ```ts
-// files/src/extension.ts
+// ./src/extension.ts
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 
-export type FilesOptions = {
+export type PiPackExampleOptions = {
   commandName?: string;
+  message?: string;
 };
 
-export const extension = (options: FilesOptions = {}) => {
-  const commandName = options.commandName ?? "files";
+export const piPackExample = (options: PiPackExampleOptions = {}) => {
+  const commandName = options.commandName ?? "pi-pack-example";
+  const message = options.message ?? "Hello from pi-pack-example.";
 
   return (pi: ExtensionAPI): void => {
     pi.registerCommand(commandName, {
-      description: "Open files mentioned in the conversation",
+      description: "Show the pi-pack example message",
       handler: async (_args, ctx) => {
-        ctx.ui.notify("Open the file browser", "info");
+        ctx.ui.notify(message, "info");
       },
     });
   };
 };
 ```
+
 #### Mono repo extensions 
 
 One repo which includes multiple extensions
@@ -304,6 +313,37 @@ export const extension = (options: FilesOptions = {}) => {
   };
 };
 ```
+
+#### Adding skills, prompts, and themes
+
+Bundle pi resources next to your extension package and return their paths from `resources_discover`. See [example](https://github.com/richardgill/pi-pack-example).
+
+```txt
+repo/
+├── skills/
+│   └── pi-pack-example/
+│       └── SKILL.md
+├── prompts/
+│   └── explain-pi-pack-example.md
+└── themes/
+    └── pi-pack-example.json
+```
+
+```ts
+// ./src/extension.ts
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const baseDir = dirname(fileURLToPath(import.meta.url));
+const packageRoot = join(baseDir, "..");
+
+pi.on("resources_discover", () => ({
+  skillPaths: [join(packageRoot, "skills", "pi-pack-example", "SKILL.md")],
+  promptPaths: [join(packageRoot, "prompts", "explain-pi-pack-example.md")],
+  themePaths: [join(packageRoot, "themes", "pi-pack-example.json")],
+}));
+```
+
 
 ## License
 
