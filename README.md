@@ -12,14 +12,14 @@
 
 A packaging system for [pi](https://github.com/badlogic/pi-mono) extensions.
 
-pi-pack extensions are configured by calling a typescript function with extension options.
+pi-pack extensions are configured by calling a typescript function with extension options:
 
 ```ts
 // ~/.pi/agent/extensions/pi-pack-example/config.ts
 
-import { piPackExample } from "pi-pack-example";
+import { extension } from "pi-pack-example";
 
-export default piPackExample({
+export default extension({
   commandName: "pi-pack-example",
   message: "This extension was configured from config.ts.",
 });
