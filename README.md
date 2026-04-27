@@ -8,7 +8,7 @@
 
 A packaging system for [pi](https://github.com/badlogic/pi-mono) extensions.
 
-pi-pack extensions are configured by calling a typescript function with extension options:
+pi-pack extensions are configured in `config.ts` by passing options to the extension’s TypeScript function:
 
 ```ts
 // ~/.pi/agent/extensions/fancy-extension/config.ts
@@ -37,7 +37,7 @@ pi-pack install git:github.com/richardgill/pi-pack-example
 
 Installs into: `~/.pi/agent/extensions/pi-pack-example`
 
-Edit the config to configure the extension:
+Customize the extension by editing its `config.ts`:
 
 ```ts
 // ~/.pi/agent/extensions/pi-pack-example/config.ts
@@ -70,7 +70,7 @@ pi-pack install "npm:foo-bar" --as "baz" # install into ~/.pi/agent/extensions/b
 
 # From local file system
 pi-pack install "~/code/my-extension"
-pi-pack install "~/code/my-extension-mono-repo" --extension "files"
+pi-pack install "~/code/my-extension-mono-repo" --extension "extension-name"
 ```
 
 pi-pack uses [pnpm](https://pnpm.io) under the hood, and supports most of pnpm's [package sources](https://pnpm.io/package-sources).
