@@ -10,10 +10,21 @@
 
 # pi-pack 
 
-A packaging system for [pi](https://github.com/badlogic/pi-mono) extensions inspired by nvim packages.
+A packaging system for [pi](https://github.com/badlogic/pi-mono) extensions.
 
-pi-pack extensions are configured using typescript to set options.
+pi-pack extensions are configured by calling a typescript function with extension options.
 
+```ts
+// ~/.pi/agent/extensions/pi-pack-example/config.ts
+
+import { piPackExample } from "pi-pack-example";
+
+export default piPackExample({
+  commandName: "pi-pack-example",
+  message: "This extension was configured from config.ts.",
+});
+
+```
 ## Getting started 
 
 ### Install
@@ -344,6 +355,9 @@ pi.on("resources_discover", () => ({
 }));
 ```
 
+## Inspirations
+
+pi-pack is inspired by neovim packaging ecosystem.
 
 ## License
 
