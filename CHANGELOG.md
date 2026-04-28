@@ -1,5 +1,11 @@
 # pi-pack
 
+## 0.0.8
+
+### Patch Changes
+
+- [#17](https://github.com/richardgill/pi-pack/pull/17) [`b67d98f`](https://github.com/richardgill/pi-pack/commit/b67d98f0e0961ee56263322b190e1ce10526ee3d) Thanks [@richardgill](https://github.com/richardgill)! - Update `pi-pack create` prompts so the repo name defaults to `pi-extensions` and the optional first extension name has no default.
+
 ## 0.0.7
 
 ### Patch Changes
