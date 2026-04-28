@@ -10,6 +10,58 @@ import { withEnvVar } from "~/testing/env";
 import { expectFileTree } from "~/testing/fs";
 import { withTempDir } from "~/testing/temp-dir";
 
+const expectedInstallHelp = `USAGE
+  pi-pack install [--extension <extension-name>] [--as <extension-dir>] [--verbose] <source>
+  pi-pack install --help
+
+Install an extension package into ~/.pi/agent/extensions/<extension-dir>
+
+INSTALL SOURCES
+  npm:<pkg>[@version]
+    Install from npm.
+
+  git:<host>/<repo>[@ref]
+    Install from a git repo. @ref can be a tag, branch, or commit.
+
+  file:<path> | ./path | ../path | ~/path | /path
+    Install from a local package directory.
+
+EXAMPLES
+  # From GitHub repo
+  pi-pack install "git:github.com/user/repo"
+  pi-pack install "git:github.com/user/repo@v1"
+
+  # From a GitHub monorepo
+  pi-pack install "git:github.com/user/mono-repo" --extension "extension-name"
+
+  # From npm
+  pi-pack install "npm:foo-bar"
+  pi-pack install "npm:foo-bar@1.0.0"
+  pi-pack install "npm:foo-bar" --as "baz"
+
+  # From local filesystem
+  pi-pack install "~/code/my-extension"
+  pi-pack install "~/code/my-extension-mono-repo" --extension "extension-name"
+
+FLAGS
+     [--extension]             Install an extension from a configured monorepo
+     [--as]                    Install under a custom extension dir
+     [--verbose/--no-verbose]  Show verbose logging
+  -h  --help                   Print help information and exit
+
+ARGUMENTS
+  source  Source specifier for the extension package
+`;
+
+test("pi-pack install --help explains install sources", async () => {
+  await withTempDir(async ({ run }) => {
+    const result = await run("pi-pack install --help");
+
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toBe(expectedInstallHelp);
+  });
+});
+
 test("pi-pack install installs a local package into pi's extensions dir", async () => {
   await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
