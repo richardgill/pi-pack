@@ -4,6 +4,7 @@ import type { VerboseFlags } from "~/lib/flags";
 import { colors } from "~/lib/colors";
 import { assertSafeRelativePath, assertSafePathSegment } from "~/lib/path";
 import {
+  looksLikeVanillaPiExtension,
   readPackageNameFromPackageRoot,
   readPiPackExtensionsDirFromPackageRoot,
 } from "~/lib/package-config";
@@ -42,6 +43,10 @@ export const runCreate = async (
   name?: string,
 ): Promise<void> => {
   const prompts = maybeCreatePrompts(context);
+  if (shouldSuggestMigration(context.cwd, flags, name)) {
+    writeMigrationHint(context);
+    return;
+  }
   const isMonorepoMode = await readMonorepoMode(prompts, flags, context.cwd, name);
   if (isMonorepoMode === undefined) return;
   if (isMonorepoMode) return runCreateMonorepo(context, flags, prompts, name);
@@ -103,6 +108,9 @@ const runCreateExtension = async (
   });
   writeExtensionCreateResult(context, extensionName, extensionRoot);
 };
+
+const shouldSuggestMigration = (cwd: string, _flags: CreateFlags, _name?: string): boolean =>
+  looksLikeVanillaPiExtension(cwd);
 
 const readMonorepoMode = async (
   prompts: Prompts | undefined,
@@ -233,6 +241,19 @@ const readExtensionCreateMode = (packageRoot: string): ExtensionCreateMode => {
 const writeMonorepoExtensionCreateHint = (context: LocalContext, root: string): void => {
   context.process.stdout.write(
     `\n${colors.accent("Monorepo detected")} ${colors.muted("— extension will be created at")} ${colors.pathText(formatRelativePath(context.cwd, root))}\n`,
+  );
+};
+
+const writeMigrationHint = (context: LocalContext): void => {
+  context.process.stdout.write(
+    [
+      "This looks like an existing repo.",
+      "",
+      "To migrate an existing pi extension, ask your AI agent to run:",
+      "",
+      "  pi-pack migrate",
+      "",
+    ].join("\n"),
   );
 };
 

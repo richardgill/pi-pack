@@ -3,6 +3,7 @@ import { installCommand } from "./commands/install/command";
 import { upgradeCommand } from "./commands/upgrade/command";
 import { uninstallCommand } from "./commands/uninstall/command";
 import { createCommand } from "./commands/create/command";
+import { migrateCommand } from "./commands/migrate/command";
 import { rootCommand } from "./commands/root/command";
 import { VERSION } from "./version";
 
@@ -12,6 +13,7 @@ const routes = buildRouteMap({
     upgrade: upgradeCommand,
     uninstall: uninstallCommand,
     create: createCommand,
+    migrate: migrateCommand,
     root: rootCommand,
   },
   defaultCommand: "root",
