@@ -10,7 +10,8 @@
     "pi-pack": "dist/cli.mjs"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "type": "module",
   "publishConfig": {

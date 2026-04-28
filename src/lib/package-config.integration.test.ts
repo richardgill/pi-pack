@@ -3,6 +3,7 @@ import { expect, test } from "vite-plus/test";
 import { writeJson } from "~/lib/json";
 import { withTempDir } from "~/testing/temp-dir";
 import {
+  looksLikeVanillaPiExtension,
   readPackageNameFromPackageRoot,
   readPiPackExtensionsDir,
   readPiPackExtensionsDirFromPackageRoot,
@@ -57,5 +58,49 @@ test("package root helpers read package config", async () => {
 test("readPackageNameFromPackageRoot falls back to directory name", async () => {
   await withTempDir(({ cwd: packageRoot }) => {
     expect(readPackageNameFromPackageRoot(packageRoot)).toBe(path.basename(packageRoot));
+  });
+});
+
+const vanillaPiExtensionCases = [
+  {
+    name: "pi.extensions",
+    packageJson: { pi: { extensions: ["./extensions"] } },
+    expected: true,
+  },
+  {
+    name: "pi-package keyword",
+    packageJson: { keywords: ["pi-package"] },
+    expected: true,
+  },
+  {
+    name: "pi-extension keyword",
+    packageJson: { keywords: ["pi-extension"] },
+    expected: true,
+  },
+  {
+    name: "pi-pack default config",
+    packageJson: {
+      pi: { extensions: ["./extensions"] },
+      "pi-pack": { "default-config": "./src/default-config.ts" },
+    },
+    expected: false,
+  },
+  {
+    name: "pi-pack monorepo config",
+    packageJson: {
+      keywords: ["pi-package"],
+      "pi-pack": { "extensions-dir": "extensions" },
+    },
+    expected: false,
+  },
+];
+
+vanillaPiExtensionCases.forEach(({ name, packageJson, expected }) => {
+  test(`looksLikeVanillaPiExtension detects ${name}`, async () => {
+    await withTempDir(({ cwd }) => {
+      writeJson(path.join(cwd, "package.json"), packageJson);
+
+      expect(looksLikeVanillaPiExtension(cwd)).toBe(expected);
+    });
   });
 });

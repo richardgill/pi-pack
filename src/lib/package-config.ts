@@ -4,16 +4,47 @@ import { readJson } from "~/lib/json";
 import type { PiPackPackageJson } from "~/lib/package-json";
 import { assertSafeRelativePath } from "~/lib/path";
 
-const readPackage = (packageJsonPath: string): PiPackPackageJson => {
-  if (!existsSync(packageJsonPath)) return {};
+const readPackageJsonIfExists = (packageJsonPath: string): PiPackPackageJson | undefined => {
+  if (!existsSync(packageJsonPath)) return undefined;
   return readJson<PiPackPackageJson>(packageJsonPath);
 };
+
+const readPackageJsonFromPackageRoot = (packageRoot: string): PiPackPackageJson | undefined =>
+  readPackageJsonIfExists(path.join(packageRoot, "package.json"));
+
+const readPackage = (packageJsonPath: string): PiPackPackageJson =>
+  readPackageJsonIfExists(packageJsonPath) ?? {};
 
 export const readPiPackExtensionsDir = (packageJsonPath: string): string | undefined => {
   const extensionsDir = readPackage(packageJsonPath)["pi-pack"]?.["extensions-dir"];
   if (extensionsDir === undefined) return undefined;
   assertSafeRelativePath(extensionsDir, "pi-pack.extensions-dir");
   return extensionsDir;
+};
+
+export const looksLikeVanillaPiExtension = (packageRoot: string): boolean => {
+  const packageJson = readPackageJsonFromPackageRoot(packageRoot);
+  if (packageJson === undefined) return false;
+
+  return hasPiExtensions(packageJson) && !hasPiPackPackageConfig(packageJson);
+};
+
+const hasPiExtensions = (packageJson: PiPackPackageJson): boolean =>
+  packageJson.pi?.extensions !== undefined || hasPiExtensionKeyword(packageJson);
+
+const hasPiExtensionKeyword = (packageJson: PiPackPackageJson): boolean =>
+  packageJson.keywords?.includes("pi-package") === true ||
+  packageJson.keywords?.includes("pi-extension") === true;
+
+const hasPiPackPackageConfig = (packageJson: PiPackPackageJson): boolean => {
+  const piPackConfig = packageJson["pi-pack"];
+  if (piPackConfig === undefined) return false;
+
+  return (
+    piPackConfig["default-config"] !== undefined ||
+    piPackConfig["extensions-dir"] !== undefined ||
+    piPackConfig.managed === true
+  );
 };
 
 export const readRequiredPiPackExtensionsDir = (packageJsonPath: string): string => {

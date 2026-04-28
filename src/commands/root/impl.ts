@@ -11,6 +11,7 @@ const helpText = [
   `  ${colors.command("pi-pack upgrade")} [${colors.command("--bump")}] ${colors.accent("[extension-name...]")}`,
   `  ${colors.command("pi-pack uninstall")} [${colors.command("--yes")}] ${colors.accent("[extension-name...]")}`,
   `  ${colors.command("pi-pack create")} [${colors.command("--mono-dir")} ${colors.accent("<extensions-dir>")}] [${colors.command("--mono")}] ${colors.accent("[name]")}`,
+  `  ${colors.command("pi-pack migrate")}`,
   "",
   "A packaging system for pi extensions",
   "",
@@ -29,6 +30,7 @@ const helpText = [
   `  ${colors.command("upgrade")}    ${colors.muted("Upgrade installed extensions")}`,
   `  ${colors.command("uninstall")}  ${colors.muted("Uninstall installed extensions")}`,
   `  ${colors.command("create")}     ${colors.muted("Create an extension package")}`,
+  `  ${colors.command("migrate")}    ${colors.muted("Print AI migration instructions for existing pi extensions")}`,
   "",
 ].join("\n");
 

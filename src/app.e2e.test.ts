@@ -9,6 +9,7 @@ const expectedHelp = `USAGE
   pi-pack upgrade [--bump] [extension-name...]
   pi-pack uninstall [--yes] [extension-name...]
   pi-pack create [--mono-dir <extensions-dir>] [--mono] [name]
+  pi-pack migrate
 
 A packaging system for pi extensions
 
@@ -27,6 +28,7 @@ COMMANDS
   upgrade    Upgrade installed extensions
   uninstall  Uninstall installed extensions
   create     Create an extension package
+  migrate    Print AI migration instructions for existing pi extensions
 `;
 
 test("pi-pack prints help", async () => {

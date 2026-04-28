@@ -156,6 +156,19 @@ pi-pack extensions repos are simple npm packages:
 - They provide a default config that will be copied into: `~/.pi/agent/extensions/<extension-name>/config.ts` 
 - They can bundle pi resources like skills, prompt templates, and themes
 
+### Migrating existing pi extensions
+
+`pi-pack migrate` prints instructions for an AI coding agent to migrate an existing pi extension repo to pi-pack.
+
+Run it from the extension repo:
+
+```bash
+cd my-preexisting-extension/
+pi-pack migrate
+```
+
+The command does not inspect or modify files. It prints both standalone and monorepo migration instructions.
+
 ### Create an extension
 
 Run `pi-pack create` to create an extension.
