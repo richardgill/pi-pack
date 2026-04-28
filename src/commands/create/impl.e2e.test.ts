@@ -5,6 +5,24 @@ import { expectFileTree } from "~/testing/fs";
 import { acceptDefault, type PromptHandler } from "~/testing/prompt-testing-types";
 import { withTempDir } from "~/testing/temp-dir";
 
+test("pi-pack create reports required non-interactive input", async () => {
+  await withTempDir(async ({ run }) => {
+    const result = await run("pi-pack create");
+
+    expect(result.stderr).toContain("Missing required non-interactive input:");
+    expect(result.stderr).toContain("- <name> or --mono <repo>");
+  });
+});
+
+test("pi-pack create --mono reports the missing repo name", async () => {
+  await withTempDir(async ({ run }) => {
+    const result = await run("pi-pack create --mono");
+
+    expect(result.stderr).toContain("Missing required non-interactive input:");
+    expect(result.stderr).toContain("- <repo>");
+  });
+});
+
 test("pi-pack create files creates a single extension package", async () => {
   await withTempDir(async ({ cwd, run }) => {
     const result = await run("pi-pack create files");

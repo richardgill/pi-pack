@@ -7,7 +7,8 @@ import {
   resolveManagedExtensions,
   type ManagedExtension,
 } from "~/lib/managed-extensions";
-import { createPrompts, maybeCreatePrompts } from "~/lib/prompts";
+import { canPrompt, createPrompts, maybeCreatePrompts } from "~/lib/prompts";
+import { formatMissingRequiredInputs } from "~/lib/required-input";
 
 export type UninstallFlags = VerboseFlags & {
   yes?: boolean;
@@ -22,7 +23,14 @@ export const runUninstall = async (
   flags: UninstallFlags,
   extensionNames: string[],
 ): Promise<void> => {
-  const targets = await chooseUninstallTargets(context, extensionNames);
+  const availableTargets = listAvailableTargets(extensionNames);
+  if (availableTargets.length === 0) {
+    printNoUninstall(context);
+    return;
+  }
+
+  assertUninstallInputsCanBeRead(context, flags, extensionNames);
+  const targets = await chooseUninstallTargets(context, extensionNames, availableTargets);
   if (targets.length === 0) {
     printNoUninstall(context);
     return;
@@ -42,18 +50,14 @@ export const runUninstall = async (
 const chooseUninstallTargets = async (
   context: LocalContext,
   extensionNames: string[],
+  availableTargets: ManagedExtension[],
 ): Promise<ManagedExtension[]> => {
-  if (extensionNames.length > 0) return resolveManagedExtensions(extensionNames);
-
-  const extensions = listManagedExtensions();
-  if (extensions.length === 0) return [];
+  if (extensionNames.length > 0) return availableTargets;
 
   const prompts = maybeCreatePrompts(context);
-  if (prompts === undefined) {
-    throw new Error("Missing extension names. Pass extension names on the command line.");
-  }
+  if (prompts === undefined) throw new Error(formatMissingRequiredInputs(["<extension-name...>"]));
 
-  return promptForUninstallTargets(prompts, extensions);
+  return promptForUninstallTargets(prompts, availableTargets);
 };
 
 const promptForUninstallTargets = async (
@@ -82,9 +86,7 @@ const confirmUninstall = async (
   if (flags.yes === true) return true;
 
   const prompts = maybeCreatePrompts(context);
-  if (prompts === undefined) {
-    throw new Error("Uninstall requires confirmation. Pass --yes to skip confirmation prompts.");
-  }
+  if (prompts === undefined) throw new Error(formatMissingRequiredInputs(["--yes"]));
 
   const confirmed = await prompts.confirm({
     message: `Permanently delete ${formatExtensionNames(targets)} including config.ts?`,
@@ -94,6 +96,28 @@ const confirmUninstall = async (
   if (prompts.isCancel(confirmed)) return false;
   return confirmed;
 };
+
+const listAvailableTargets = (extensionNames: string[]): ManagedExtension[] => {
+  if (extensionNames.length === 0) return listManagedExtensions();
+  return resolveManagedExtensions(extensionNames);
+};
+
+const assertUninstallInputsCanBeRead = (
+  context: LocalContext,
+  flags: UninstallFlags,
+  extensionNames: string[],
+): void => {
+  if (canPrompt(context)) return;
+  const missingInputs = readMissingUninstallInputs(extensionNames, flags);
+  if (missingInputs.length === 0) return;
+  throw new Error(formatMissingRequiredInputs(missingInputs));
+};
+
+const readMissingUninstallInputs = (extensionNames: string[], flags: UninstallFlags): string[] =>
+  [
+    extensionNames.length === 0 ? "<extension-name...>" : undefined,
+    flags.yes === true ? undefined : "--yes",
+  ].filter((input): input is string => input !== undefined);
 
 const removeExtensionDirs = (targets: ManagedExtension[]): void => {
   targets.forEach((target) => {

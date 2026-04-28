@@ -96,14 +96,29 @@ test("pi-pack uninstall rejects unmanaged extension names", async () => {
   });
 });
 
-test("pi-pack uninstall errors without names or an interactive prompt", async () => {
+test("pi-pack uninstall reports all required non-interactive inputs", async () => {
   await withTempDir(async ({ cwd, run }) => {
     const source = createExtensionPackage(cwd, "files");
     await run(`pi-pack install ${source}`);
 
     const result = await run("pi-pack uninstall");
 
-    expect(result.stderr).toContain("Missing extension names");
+    expect(result.stderr).toContain("Missing required non-interactive input:");
+    expect(result.stderr).toContain("- <extension-name...>");
+    expect(result.stderr).toContain("- --yes");
+  });
+});
+
+test("pi-pack uninstall reports missing non-interactive confirmation", async () => {
+  await withTempDir(async ({ cwd, run }) => {
+    const source = createExtensionPackage(cwd, "files");
+    await run(`pi-pack install ${source}`);
+
+    const result = await run("pi-pack uninstall files");
+
+    expect(result.stderr).toContain("Missing required non-interactive input:");
+    expect(result.stderr).not.toContain("- <extension-name...>");
+    expect(result.stderr).toContain("- --yes");
   });
 });
 

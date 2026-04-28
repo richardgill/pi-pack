@@ -10,6 +10,15 @@ import { withEnvVar } from "~/testing/env";
 import { expectFileTree } from "~/testing/fs";
 import { withTempDir } from "~/testing/temp-dir";
 
+test("pi-pack install help names its source argument", async () => {
+  await withTempDir(async ({ run }) => {
+    const result = await run("pi-pack install --help");
+
+    expect(result.stdout).toContain("<source>");
+    expect(result.stdout).toContain("source  Source specifier for the extension package");
+  });
+});
+
 test("pi-pack install installs a local package into pi's extensions dir", async () => {
   await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");

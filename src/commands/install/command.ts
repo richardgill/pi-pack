@@ -29,6 +29,7 @@ export const installCommand = buildCommand<InstallFlags, InstallArgs, LocalConte
       parameters: [
         {
           brief: "Source specifier for the extension package",
+          placeholder: "source",
           parse: stringParser,
         },
       ],
