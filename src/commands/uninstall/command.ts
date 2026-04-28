@@ -20,7 +20,7 @@ export const uninstallCommand = buildCommand<UninstallFlags, UninstallArgs, Loca
       kind: "array",
       minimum: 0,
       parameter: {
-        brief: "Extension name to uninstall",
+        brief: "Extension name to uninstall (required with --yes in non-interactive runs)",
         placeholder: "extension-name",
         parse: stringParser,
       },
@@ -28,6 +28,7 @@ export const uninstallCommand = buildCommand<UninstallFlags, UninstallArgs, Loca
   },
   docs: {
     brief: "Uninstall installed extensions",
+    customUsage: ["[--yes] [--verbose] [extension-name...]"],
   },
   func: async function (this: LocalContext, flags, ...extensionNames) {
     return runCliCommand(this, () => runUninstall(this, flags, extensionNames));

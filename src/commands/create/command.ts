@@ -27,6 +27,7 @@ export const createCommand = buildCommand<CreateFlags, CreateArgs, LocalContext>
       parameters: [
         {
           brief: "Extension package name to create",
+          placeholder: "name",
           parse: stringParser,
           optional: true,
         },

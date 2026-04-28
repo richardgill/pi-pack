@@ -61,7 +61,6 @@ test("pi-pack install --help explains install sources", async () => {
     expect(result.stdout).toBe(expectedInstallHelp);
   });
 });
-
 test("pi-pack install installs a local package into pi's extensions dir", async () => {
   await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");

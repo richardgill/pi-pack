@@ -10,6 +10,7 @@ import {
 } from "~/lib/package-config";
 import { assertSafeExtensionName } from "~/lib/pi";
 import { createPrompts, maybeCreatePrompts } from "~/lib/prompts";
+import { formatMissingRequiredInputs } from "~/lib/required-input";
 import { createExtension, createMono } from "./scaffold";
 
 export type CreateFlags = VerboseFlags & {
@@ -119,8 +120,9 @@ const readMonorepoMode = async (
 ): Promise<boolean | undefined> => {
   if (flags.mono === true || flags.monoDir !== undefined) return true;
   if (name !== undefined || readPiPackExtensionsDirFromPackageRoot(cwd) !== undefined) return false;
-  if (prompts === undefined)
-    throw new Error("Usage: pi-pack create <name> or pi-pack create --mono <repo>");
+  if (prompts === undefined) {
+    throw new Error(formatMissingRequiredInputs(["<name> or --mono <repo>"]));
+  }
 
   const target = await promptForCreateTarget(prompts);
   if (prompts.isCancel(target)) return undefined;
@@ -132,7 +134,7 @@ const readRepoName = async (
   name?: string,
 ): Promise<string | undefined> => {
   if (name !== undefined) return name;
-  if (prompts === undefined) throw new Error("Missing repo name.");
+  if (prompts === undefined) throw new Error(formatMissingRequiredInputs(["<repo>"]));
 
   const repoName = await prompts.text({
     message: "Repo name",
@@ -148,7 +150,7 @@ const readExtensionName = async (
   name?: string,
 ): Promise<string | undefined> => {
   if (name !== undefined) return name;
-  if (prompts === undefined) throw new Error("Missing extension name.");
+  if (prompts === undefined) throw new Error(formatMissingRequiredInputs(["<name>"]));
 
   const extensionName = await prompts.text({
     message: "Extension name. e.g. pi-preset",

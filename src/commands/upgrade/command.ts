@@ -20,7 +20,7 @@ export const upgradeCommand = buildCommand<UpgradeFlags, UpgradeArgs, LocalConte
       kind: "array",
       minimum: 0,
       parameter: {
-        brief: "Extension name to upgrade",
+        brief: "Extension name to upgrade (omit to upgrade all managed extensions)",
         placeholder: "extension-name",
         parse: stringParser,
       },
@@ -28,6 +28,7 @@ export const upgradeCommand = buildCommand<UpgradeFlags, UpgradeArgs, LocalConte
   },
   docs: {
     brief: "Upgrade installed extensions",
+    customUsage: ["[--bump] [--verbose] [extension-name...]"],
   },
   func: async function (this: LocalContext, flags, ...extensionNames) {
     return runCliCommand(this, () => runUpgrade(this, flags, extensionNames));
