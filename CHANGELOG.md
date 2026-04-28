@@ -1,5 +1,15 @@
 # pi-pack
 
+## 0.0.9
+
+### Patch Changes
+
+- [#20](https://github.com/richardgill/pi-pack/pull/20) [`48f83a1`](https://github.com/richardgill/pi-pack/commit/48f83a190218e42681fc7e67f053c2c7d89c2582) Thanks [@richardgill](https://github.com/richardgill)! - Add `pi-pack migrate` to print AI migration instructions for converting existing pi extensions to pi-pack.
+
+- [#19](https://github.com/richardgill/pi-pack/pull/19) [`232bc9b`](https://github.com/richardgill/pi-pack/commit/232bc9b3c10765734090e3869a5cf8f4a81ed36f) Thanks [@richardgill](https://github.com/richardgill)! - Improve `pi-pack install --help` with install source examples.
+
+- [#22](https://github.com/richardgill/pi-pack/pull/22) [`9b8609a`](https://github.com/richardgill/pi-pack/commit/9b8609a294456ffe74946137f0de8645791233df) Thanks [@richardgill](https://github.com/richardgill)! - Improve non-interactive required input errors and command help placeholders.
+
 ## 0.0.8
 
 ### Patch Changes
