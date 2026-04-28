@@ -70,6 +70,20 @@ test("pi-pack create files uses the configured extensions dir", async () => {
   });
 });
 
+test("pi-pack create files inside a monorepo prints the target hint", async () => {
+  await withTempDir(async ({ cwd, run }) => {
+    writeJson(path.join(cwd, "package.json"), {
+      "pi-pack": { "extensions-dir": "packages" },
+    });
+
+    const result = await run("pi-pack create files");
+
+    expect(result.stdout).toBe(
+      "\nMonorepo detected — extension will be created at ./packages/files\n\nCreated extension package files at ./packages/files\n",
+    );
+  });
+});
+
 test("pi-pack create rejects path-like extension names", async () => {
   await withTempDir(async ({ cwd, run }) => {
     const result = await run("pi-pack create ../escaped");
@@ -128,7 +142,9 @@ test("interactive pi-pack create inside a monorepo prompts for an extension name
 
     const result = await run("pi-pack create", { promptHandler });
 
-    expect(result.stdout).toBe("\nCreated extension package tasks at ./extensions/tasks\n");
+    expect(result.stdout).toBe(
+      "\nMonorepo detected — extension will be created at ./extensions/tasks\n\nCreated extension package tasks at ./extensions/tasks\n",
+    );
     expectFileTree(cwd, { files: { "extensions/tasks/package.json": true } });
   });
 });
@@ -194,12 +210,54 @@ test("pi-pack create --mono-dir rejects dirs that escape the repo root", async (
   });
 });
 
+test("interactive pi-pack create --mono accepts the default repo name", async () => {
+  const promptHandler: PromptHandler = (prompt) => {
+    if (prompt.message === "Repo name") {
+      expect(prompt).toMatchObject({ defaultValue: "pi-extensions", placeholder: "pi-extensions" });
+      return acceptDefault;
+    }
+    if (prompt.message === "Extensions dir") return acceptDefault;
+    if (prompt.message === "First extension name. e.g. preset") return "files";
+    throw new Error(`Unexpected prompt: ${prompt.message}`);
+  };
+
+  await withTempDir(async ({ cwd, run }) => {
+    await run("pi-pack create --mono", { promptHandler });
+
+    expectFileTree(cwd, {
+      files: {
+        "pi-extensions/package.json": true,
+        "pi-extensions/extensions/files/package.json": true,
+      },
+    });
+  });
+});
+
+test("interactive pi-pack create prompts for an optional first extension name without a default", async () => {
+  const promptHandler: PromptHandler = (prompt) => {
+    if (prompt.message === "What do you want to create?") return "mono";
+    if (prompt.message === "Repo name") return "repo";
+    if (prompt.message === "Extensions dir") return acceptDefault;
+    if (prompt.message === "First extension name. e.g. preset") {
+      expect(prompt).toEqual({ type: "text", message: "First extension name. e.g. preset" });
+      return "files";
+    }
+    throw new Error(`Unexpected prompt: ${prompt.message}`);
+  };
+
+  await withTempDir(async ({ cwd, run }) => {
+    await run("pi-pack create", { promptHandler });
+
+    expectFileTree(cwd, { files: { "repo/extensions/files/package.json": true } });
+  });
+});
+
 test("interactive pi-pack create can create a monorepo with a first extension", async () => {
   const promptHandler: PromptHandler = (prompt) => {
     if (prompt.message === "What do you want to create?") return "mono";
     if (prompt.message === "Repo name") return "repo";
     if (prompt.message === "Extensions dir") return acceptDefault;
-    if (prompt.message === "First extension name. e.g. pi-preset") return "files";
+    if (prompt.message === "First extension name. e.g. preset") return "files";
     throw new Error(`Unexpected prompt: ${prompt.message}`);
   };
 
@@ -238,7 +296,7 @@ test("interactive pi-pack create rejects path-like first extension names", async
     if (prompt.message === "What do you want to create?") return "mono";
     if (prompt.message === "Repo name") return "repo";
     if (prompt.message === "Extensions dir") return acceptDefault;
-    if (prompt.message === "First extension name. e.g. pi-preset") return "dir/files";
+    if (prompt.message === "First extension name. e.g. preset") return "dir/files";
     throw new Error(`Unexpected prompt: ${prompt.message}`);
   };
 
@@ -277,7 +335,7 @@ test("interactive pi-pack create --mono prompts for the repo and first extension
   const promptHandler: PromptHandler = (prompt) => {
     if (prompt.message === "Repo name") return "repo";
     if (prompt.message === "Extensions dir") return acceptDefault;
-    if (prompt.message === "First extension name. e.g. pi-preset") return "files";
+    if (prompt.message === "First extension name. e.g. preset") return "files";
     throw new Error(`Unexpected prompt: ${prompt.message}`);
   };
 
@@ -298,7 +356,7 @@ test("interactive pi-pack create --mono prompts for the repo and first extension
 test("interactive pi-pack create --mono-dir prompts for the repo and first extension names", async () => {
   const promptHandler: PromptHandler = (prompt) => {
     if (prompt.message === "Repo name") return "repo";
-    if (prompt.message === "First extension name. e.g. pi-preset") return "files";
+    if (prompt.message === "First extension name. e.g. preset") return "files";
     throw new Error(`Unexpected prompt: ${prompt.message}`);
   };
 

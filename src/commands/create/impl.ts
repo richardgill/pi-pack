@@ -32,7 +32,8 @@ type ExtensionCreateMode =
 type Prompts = ReturnType<typeof createPrompts>;
 
 const DEFAULT_EXTENSIONS_DIR = "extensions";
-const DEFAULT_EXTENSION_NAME_PREFIX = "pi-";
+const DEFAULT_REPO_NAME = "pi-extensions";
+const DEFAULT_EXTENSION_NAME_INPUT = "pi-";
 
 export const runCreate = async (
   context: LocalContext,
@@ -93,6 +94,7 @@ const runCreateExtension = async (
   // This call figures out which one it is
   const mode = readExtensionCreateMode(context.cwd);
   const extensionRoot = path.join(mode.extensionRootParent, extensionName);
+  if (mode.type === "monorepo") writeMonorepoExtensionCreateHint(context, extensionRoot);
   createExtension({
     extensionName,
     extensionRoot,
@@ -126,7 +128,8 @@ const readRepoName = async (
 
   const repoName = await prompts.text({
     message: "Repo name",
-    placeholder: "pi-extensions",
+    placeholder: DEFAULT_REPO_NAME,
+    initialValue: DEFAULT_REPO_NAME,
   });
   if (prompts.isCancel(repoName)) return undefined;
   return repoName;
@@ -141,8 +144,8 @@ const readExtensionName = async (
 
   const extensionName = await prompts.text({
     message: "Extension name. e.g. pi-preset",
-    placeholder: DEFAULT_EXTENSION_NAME_PREFIX,
-    initialValue: DEFAULT_EXTENSION_NAME_PREFIX,
+    placeholder: DEFAULT_EXTENSION_NAME_INPUT,
+    initialValue: DEFAULT_EXTENSION_NAME_INPUT,
   });
   if (prompts.isCancel(extensionName)) return undefined;
   return extensionName;
@@ -170,9 +173,7 @@ const readFirstMonorepoExtensionName = async (
   if (prompts === undefined) return undefined;
 
   const extensionName = await prompts.text({
-    message: "First extension name. e.g. pi-preset",
-    placeholder: DEFAULT_EXTENSION_NAME_PREFIX,
-    initialValue: DEFAULT_EXTENSION_NAME_PREFIX,
+    message: "First extension name. e.g. preset",
   });
   if (prompts.isCancel(extensionName)) return undefined;
   return extensionName;
@@ -225,6 +226,12 @@ const readExtensionCreateMode = (packageRoot: string): ExtensionCreateMode => {
     repoName: readPackageNameFromPackageRoot(packageRoot),
     repoRoot: packageRoot,
   };
+};
+
+const writeMonorepoExtensionCreateHint = (context: LocalContext, root: string): void => {
+  context.process.stdout.write(
+    `\n${colors.accent("Monorepo detected")} ${colors.muted("— extension will be created at")} ${colors.pathText(formatRelativePath(context.cwd, root))}\n`,
+  );
 };
 
 const writeExtensionCreateResult = (context: LocalContext, name: string, root: string): void => {
