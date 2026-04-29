@@ -3,7 +3,10 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { runCommand } from "~/lib/command";
-import { readRequiredPiPackExtensionsDir } from "~/lib/package-config";
+import {
+  readPiPackExtensionNamesFromPackageRoot,
+  readRequiredPiPackExtensionsDir,
+} from "~/lib/package-config";
 import { assertSafeExtensionName } from "~/lib/pi";
 import { isString } from "~/lib/string";
 
@@ -19,6 +22,14 @@ export const toPnpmDependency = async (
   if (source.startsWith("git:")) return toPnpmGitSource(source.slice("git:".length), packagePath);
   if (isPathSource(source)) return resolvePathSource(cwd, source, packagePath);
   return source;
+};
+
+export const readLocalInstallSourceExtensionNames = (
+  cwd: string,
+  source: string,
+): string[] | undefined => {
+  if (!source.startsWith("file:") && !isPathSource(source)) return undefined;
+  return readPiPackExtensionNamesFromPackageRoot(resolveLocalSourceRoot(cwd, source));
 };
 
 const assertExtensionNameIsSupported = (source: string, extensionName?: string): void => {

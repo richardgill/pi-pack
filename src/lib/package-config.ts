@@ -118,6 +118,23 @@ export const readRequiredPiPackExtensionsDir = (packageJsonPath: string): string
   throw new Error(`Missing pi-pack.extensions-dir in ${packageJsonPath}`);
 };
 
+export const readPiPackExtensionNamesFromPackageRoot = (
+  packageRoot: string,
+): string[] | undefined => {
+  const extensionsDir = readPiPackExtensionsDirFromPackageRoot(packageRoot);
+  if (extensionsDir === undefined) return undefined;
+
+  return readChildDirs(path.join(packageRoot, extensionsDir))
+    .filter(looksLikePiPackExtensionPackage)
+    .map((dir) => path.basename(dir))
+    .sort((left, right) => left.localeCompare(right));
+};
+
+const looksLikePiPackExtensionPackage = (packageRoot: string): boolean => {
+  const packageJson = readPackageJsonFromPackageRoot(packageRoot);
+  return packageJson?.["pi-pack"]?.["default-config"] !== undefined;
+};
+
 export const readPiPackExtensionsDirFromPackageRoot = (packageRoot: string): string | undefined =>
   readPiPackExtensionsDir(path.join(packageRoot, "package.json"));
 
