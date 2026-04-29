@@ -1,5 +1,11 @@
 # pi-pack
 
+## 0.0.11
+
+### Patch Changes
+
+- [#29](https://github.com/richardgill/pi-pack/pull/29) [`ced368e`](https://github.com/richardgill/pi-pack/commit/ced368e29e03beff5cc8da1b5cf34f7b93e48aee) Thanks [@richardgill](https://github.com/richardgill)! - Fix `pi-pack create` migration detection so non-project parent directories are not treated as legacy Pi extension repositories because of nested unrelated packages.
+
 ## 0.0.10
 
 ### Patch Changes
