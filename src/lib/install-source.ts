@@ -2,9 +2,10 @@ import { mkdtempSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { runCommand } from "~/lib/command";
+import { readCommandOutput, runCommand } from "~/lib/command";
 import {
   readPiPackExtensionNamesFromPackageRoot,
+  readPiPackExtensionsDirFromPackageRoot,
   readRequiredPiPackExtensionsDir,
 } from "~/lib/package-config";
 import { assertSafeExtensionName } from "~/lib/pi";
@@ -24,10 +25,12 @@ export const toPnpmDependency = async (
   return source;
 };
 
-export const readLocalInstallSourceExtensionNames = (
+export const readInstallSourceExtensionNames = async (
   cwd: string,
   source: string,
-): string[] | undefined => {
+): Promise<string[] | undefined> => {
+  if (source.startsWith("git:"))
+    return readGitInstallSourceExtensionNames(source.slice("git:".length));
   if (!source.startsWith("file:") && !isPathSource(source)) return undefined;
   return readPiPackExtensionNamesFromPackageRoot(resolveLocalSourceRoot(cwd, source));
 };
@@ -72,14 +75,70 @@ const readGitExtensionsDir = async (source: string): Promise<string> => {
   }
 };
 
+const readGitInstallSourceExtensionNames = async (
+  source: string,
+): Promise<string[] | undefined> => {
+  const parsed = parseGitSource(source);
+  const tempRoot = mkdtempSync(path.join(os.tmpdir(), "pi-pack-repo-"));
+
+  try {
+    await prepareGitCheckout(tempRoot, parsed);
+    await checkoutGitPaths(tempRoot, ["package.json"]);
+    const extensionsDir = readPiPackExtensionsDirFromPackageRoot(tempRoot);
+    if (extensionsDir === undefined) return undefined;
+
+    const packageJsonPaths = await readGitExtensionPackageJsonPaths(tempRoot, extensionsDir);
+    await checkoutGitPaths(tempRoot, packageJsonPaths);
+    return readPiPackExtensionNamesFromPackageRoot(tempRoot);
+  } catch {
+    return undefined;
+  } finally {
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+};
+
 const checkoutGitPackageJson = async (
+  cwd: string,
+  source: { repo: string; ref?: string },
+): Promise<void> => {
+  await prepareGitCheckout(cwd, source);
+  await checkoutGitPaths(cwd, ["package.json"]);
+};
+
+const prepareGitCheckout = async (
   cwd: string,
   source: { repo: string; ref?: string },
 ): Promise<void> => {
   await runCommand("git", ["init"], cwd);
   await runCommand("git", ["remote", "add", "origin", toGitCloneUrl(source.repo)], cwd);
   await runCommand("git", ["fetch", "--depth=1", "origin", source.ref ?? "HEAD"], cwd);
-  await runCommand("git", ["checkout", "--force", "FETCH_HEAD", "--", "package.json"], cwd);
+};
+
+const checkoutGitPaths = async (cwd: string, paths: string[]): Promise<void> => {
+  if (paths.length === 0) return;
+  await runCommand("git", ["checkout", "--force", "FETCH_HEAD", "--", ...paths], cwd);
+};
+
+const readGitExtensionPackageJsonPaths = async (
+  cwd: string,
+  extensionsDir: string,
+): Promise<string[]> => {
+  const output = await readCommandOutput(
+    "git",
+    ["ls-tree", "-r", "--name-only", "-z", "FETCH_HEAD", "--", extensionsDir],
+    cwd,
+  );
+  return output
+    .split("\0")
+    .filter((packageJsonPath) => isDirectExtensionPackageJsonPath(extensionsDir, packageJsonPath));
+};
+
+const isDirectExtensionPackageJsonPath = (
+  extensionsDir: string,
+  packageJsonPath: string,
+): boolean => {
+  const relativePath = path.posix.relative(extensionsDir, packageJsonPath);
+  return relativePath.split("/").length === 2 && relativePath.endsWith("/package.json");
 };
 
 const resolveLocalSourceRoot = (cwd: string, source: string): string => {
