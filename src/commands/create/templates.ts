@@ -19,6 +19,9 @@ export const extensionPackageJson = (name: string): PiPackPackageJson => ({
     ".": "./src/extension.ts",
   },
   keywords: ["pi-package"],
+  peerDependencies: {
+    "@mariozechner/pi-coding-agent": "*",
+  },
   "pi-pack": {
     "default-config": "./src/default-config.ts",
     "requires-config-edit": true,

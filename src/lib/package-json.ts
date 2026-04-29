@@ -21,6 +21,7 @@ export type PackageJson = {
   exports?: PackageJsonExports;
   keywords?: string[];
   dependencies?: PackageJsonDependency;
+  peerDependencies?: PackageJsonDependency;
   bin?: string | Partial<Record<string, string>>;
 };
 

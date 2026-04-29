@@ -33,6 +33,7 @@ test("pi-pack create files creates a single extension package", async () => {
         "files/package.json": {
           json: {
             name: "files",
+            peerDependencies: { "@mariozechner/pi-coding-agent": "*" },
             "pi-pack": { "default-config": "./src/default-config.ts" },
           },
         },
