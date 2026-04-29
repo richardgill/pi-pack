@@ -1,5 +1,15 @@
 # pi-pack
 
+## 0.0.10
+
+### Patch Changes
+
+- [#27](https://github.com/richardgill/pi-pack/pull/27) [`90a7eb5`](https://github.com/richardgill/pi-pack/commit/90a7eb54ad93dd704bd86bc0a60dfc7130ceb9df) Thanks [@richardgill](https://github.com/richardgill)! - Update migrate command test expectations for config migration guidance.
+
+- [#24](https://github.com/richardgill/pi-pack/pull/24) [`ae124a1`](https://github.com/richardgill/pi-pack/commit/ae124a178141b49384897423ee207e082202fcf2) Thanks [@richardgill](https://github.com/richardgill)! - Add pi-coding-agent as a peer dependency in generated extension packages.
+
+- [#28](https://github.com/richardgill/pi-pack/pull/28) [`e6062f0`](https://github.com/richardgill/pi-pack/commit/e6062f05e1f9a00775b9bd7ca473232c6e277edf) Thanks [@richardgill](https://github.com/richardgill)! - Suggest install commands for configured monorepo extensions.
+
 ## 0.0.9
 
 ### Patch Changes
