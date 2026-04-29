@@ -102,6 +102,27 @@ legacyPiExtensionCases.forEach(({ name, packageJson }) => {
   });
 });
 
+test("pi-pack create suggests running migrate when a nested package has a pi extension keyword", async () => {
+  await withTempDir(async ({ cwd, run }) => {
+    writeJson(path.join(cwd, "package.json"), { name: "pi-extensions" });
+    writeJson(path.join(cwd, "extensions/files/package.json"), { keywords: ["pi-extension"] });
+
+    const result = await run("pi-pack create");
+
+    expect(result.stdout).toBe(
+      [
+        "This looks like an existing repo.",
+        "",
+        "To migrate an existing pi extension, ask your AI agent to run:",
+        "",
+        "  pi-pack migrate",
+        "",
+      ].join("\n"),
+    );
+    expectFileTree(cwd, { missing: ["pi-extensions/package.json"] });
+  });
+});
+
 test("pi-pack create files uses the configured extensions dir", async () => {
   await withTempDir(async ({ cwd, run }) => {
     writeJson(path.join(cwd, "package.json"), {
