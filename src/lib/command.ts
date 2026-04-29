@@ -1,7 +1,29 @@
 import { spawn } from "node:child_process";
 import type { LocalContext } from "~/context";
 
-export const runCommand = (command: string, args: string[], cwd: string): Promise<void> =>
+type CommandOutput = {
+  stdout: Buffer[];
+  stderr: Buffer[];
+};
+
+export const runCommand = async (command: string, args: string[], cwd: string): Promise<void> => {
+  await runCommandWithOutput(command, args, cwd);
+};
+
+export const readCommandOutput = async (
+  command: string,
+  args: string[],
+  cwd: string,
+): Promise<string> => {
+  const output = await runCommandWithOutput(command, args, cwd);
+  return Buffer.concat(output.stdout).toString("utf8");
+};
+
+const runCommandWithOutput = (
+  command: string,
+  args: string[],
+  cwd: string,
+): Promise<CommandOutput> =>
   new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd,
@@ -15,7 +37,7 @@ export const runCommand = (command: string, args: string[], cwd: string): Promis
     child.on("error", reject);
     child.on("close", (code) => {
       if (code === 0) {
-        resolve();
+        resolve({ stdout, stderr });
         return;
       }
 

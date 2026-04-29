@@ -3,7 +3,7 @@ import type { LocalContext } from "~/context";
 import type { VerboseFlags } from "~/lib/flags";
 import { colors } from "~/lib/colors";
 import { INSTALLED_EXTENSION_CONFIG_FILE } from "~/lib/package-json";
-import { toPnpmDependency } from "~/lib/install-source";
+import { readInstallSourceExtensionNames, toPnpmDependency } from "~/lib/install-source";
 import { assertSafeExtensionName, resolvePiExtensionsDir } from "~/lib/pi";
 import { resolvePackageNameFromPnpmSource } from "~/lib/pnpm";
 import { createSpinner } from "~/lib/prompts";
@@ -56,6 +56,7 @@ const resolveInstall = async (
   if (flags.extension !== undefined) {
     assertSafeExtensionName(flags.extension);
   }
+  await assertExtensionSelectedForMonorepo(context.cwd, source, flags.extension);
   const pnpmDependency = await toPnpmDependency(context.cwd, source, flags.extension);
   const packageName = await resolvePackageNameFromPnpmSource(pnpmDependency);
   const installAs = flags.as ?? packageName;
@@ -70,6 +71,26 @@ const resolveInstall = async (
     absInstallDir: path.join(piExtensionsDir, installAs),
   };
 };
+
+const assertExtensionSelectedForMonorepo = async (
+  cwd: string,
+  source: string,
+  extensionName?: string,
+): Promise<void> => {
+  if (extensionName !== undefined) return;
+  const extensionNames = await readInstallSourceExtensionNames(cwd, source);
+  if (extensionNames === undefined || extensionNames.length === 0) return;
+  throw new Error(formatExtensionSuggestions(source, extensionNames));
+};
+
+const formatExtensionSuggestions = (source: string, extensionNames: string[]): string =>
+  [
+    "Did you mean:",
+    "",
+    ...extensionNames.map(
+      (extensionName) => `pi-pack install ${source} --extension ${extensionName}`,
+    ),
+  ].join("\n");
 
 const printInstallSummary = (
   context: LocalContext,

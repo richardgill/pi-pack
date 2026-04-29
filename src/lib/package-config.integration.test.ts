@@ -7,6 +7,7 @@ import { withTempDir } from "~/testing/temp-dir";
 import {
   looksLikeVanillaPiExtension,
   readPackageNameFromPackageRoot,
+  readPiPackExtensionNamesFromPackageRoot,
   readPiPackExtensionsDir,
   readPiPackExtensionsDirFromPackageRoot,
   readRequiredPiPackExtensionsDir,
@@ -54,6 +55,25 @@ test("package root helpers read package config", async () => {
 
     expect(readPiPackExtensionsDirFromPackageRoot(packageRoot)).toBe("packages");
     expect(readPackageNameFromPackageRoot(packageRoot)).toBe("pi-extensions");
+  });
+});
+
+test("readPiPackExtensionNamesFromPackageRoot returns configured pi-pack extension packages", async () => {
+  await withTempDir(({ cwd: packageRoot }) => {
+    writeJson(path.join(packageRoot, "package.json"), {
+      "pi-pack": { "extensions-dir": "packages" },
+    });
+    writeJson(path.join(packageRoot, "packages/blah2/package.json"), {
+      "pi-pack": { "default-config": "./src/default-config.ts" },
+    });
+    writeJson(path.join(packageRoot, "packages/blah1/package.json"), {
+      "pi-pack": { "default-config": "./src/default-config.ts" },
+    });
+    writeJson(path.join(packageRoot, "packages/tool/package.json"), {
+      name: "tool",
+    });
+
+    expect(readPiPackExtensionNamesFromPackageRoot(packageRoot)).toEqual(["blah1", "blah2"]);
   });
 });
 

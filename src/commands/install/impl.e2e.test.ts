@@ -179,6 +179,32 @@ test("pi-pack install --extension installs a package from a configured monorepo"
   });
 });
 
+test("pi-pack install suggests --extension choices for a configured local monorepo", async () => {
+  await withTempDir(async ({ cwd, run }) => {
+    const agentDir = path.join(cwd, "agent");
+    const repoRoot = path.join(cwd, "repo");
+    writeJson(path.join(repoRoot, "package.json"), {
+      "pi-pack": { "extensions-dir": "packages" },
+    });
+    createExtensionPackage(path.join(repoRoot, "packages"), "blah2");
+    createExtensionPackage(path.join(repoRoot, "packages"), "blah1");
+    writeJson(path.join(repoRoot, "packages/tool/package.json"), { name: "tool" });
+
+    const result = await run(`pi-pack install ${repoRoot}`);
+
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toContain(
+      [
+        "Did you mean:",
+        "",
+        `pi-pack install ${repoRoot} --extension blah1`,
+        `pi-pack install ${repoRoot} --extension blah2`,
+      ].join("\n"),
+    );
+    expectFileTree(agentDir, { missing: ["extensions/blah1", "extensions/blah2"] });
+  });
+});
+
 test("pi-pack install --extension rejects configured dirs that escape the source root", async () => {
   await withTempDir(async ({ cwd, run }) => {
     const agentDir = path.join(cwd, "agent");
