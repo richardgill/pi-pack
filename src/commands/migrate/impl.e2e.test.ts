@@ -16,6 +16,7 @@ If this repo is a standalone pi extension:
   - pi-pack.default-config = "./src/default-config.ts"
   - pi-pack.requires-config-edit = default: true, or false if the extension has no configuration options
 - Ask the user how people should install this extension: npm, GitHub, or local file path.
+- Any existing config managed by a file should be removed. Instead use parameters in the function call exported by extension.ts.
 - Update README install instructions for the chosen install source.
 
 If this repo contains multiple pi extensions:
