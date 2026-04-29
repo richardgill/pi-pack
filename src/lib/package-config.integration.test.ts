@@ -1,3 +1,5 @@
+import { spawnSync } from "node:child_process";
+import { writeFileSync } from "node:fs";
 import path from "node:path";
 import { expect, test } from "vite-plus/test";
 import { writeJson } from "~/lib/json";
@@ -104,3 +106,50 @@ vanillaPiExtensionCases.forEach(({ name, packageJson, expected }) => {
     });
   });
 });
+
+const nestedVanillaPiExtensionCases = [
+  {
+    name: "nested package within depth cap",
+    packagePath: "a/b/c/d/package.json",
+    expected: true,
+  },
+  {
+    name: "nested package past depth cap",
+    packagePath: "a/b/c/d/e/package.json",
+    expected: false,
+  },
+];
+
+nestedVanillaPiExtensionCases.forEach(({ name, packagePath, expected }) => {
+  test(`looksLikeVanillaPiExtension detects ${name}`, async () => {
+    await withTempDir(({ cwd }) => {
+      writeJson(path.join(cwd, packagePath), { keywords: ["pi-extension"] });
+
+      expect(looksLikeVanillaPiExtension(cwd)).toBe(expected);
+    });
+  });
+});
+
+test("looksLikeVanillaPiExtension honors gitignore while scanning nested packages", async () => {
+  await withTempDir(({ cwd }) => {
+    initGitRepo(cwd);
+    writeFileSync(path.join(cwd, ".gitignore"), "ignored/\n", "utf8");
+    writeJson(path.join(cwd, "ignored/files/package.json"), { keywords: ["pi-extension"] });
+
+    expect(looksLikeVanillaPiExtension(cwd)).toBe(false);
+  });
+});
+
+test("looksLikeVanillaPiExtension does not scan an already pi-pack-managed root", async () => {
+  await withTempDir(({ cwd }) => {
+    writeJson(path.join(cwd, "package.json"), { "pi-pack": { "extensions-dir": "extensions" } });
+    writeJson(path.join(cwd, "extensions/files/package.json"), { keywords: ["pi-extension"] });
+
+    expect(looksLikeVanillaPiExtension(cwd)).toBe(false);
+  });
+});
+
+const initGitRepo = (cwd: string): void => {
+  const result = spawnSync("git", ["init"], { cwd, encoding: "utf8" });
+  expect(result.status).toBe(0);
+};
