@@ -32,8 +32,12 @@ export const looksLikeVanillaPiExtension = (packageRoot: string): boolean => {
   return findPackageJsonPaths(packageRoot).some(looksLikeVanillaPiExtensionPackageJsonPath);
 };
 
-const findPackageJsonPaths = (root: string): string[] =>
-  readGitPackageJsonPaths(root) ?? findPackageJsonPathsByWalking(root);
+const findPackageJsonPaths = (root: string): string[] => {
+  const gitPackageJsonPaths = readGitPackageJsonPaths(root);
+  if (gitPackageJsonPaths !== undefined) return gitPackageJsonPaths;
+  if (!existsSync(path.join(root, "package.json"))) return [];
+  return findPackageJsonPathsByWalking(root);
+};
 
 const readGitPackageJsonPaths = (root: string): string[] | undefined => {
   const result = spawnSync(
