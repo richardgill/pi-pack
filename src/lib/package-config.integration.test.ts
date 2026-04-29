@@ -143,10 +143,28 @@ const nestedVanillaPiExtensionCases = [
 nestedVanillaPiExtensionCases.forEach(({ name, packagePath, expected }) => {
   test(`looksLikeVanillaPiExtension detects ${name}`, async () => {
     await withTempDir(({ cwd }) => {
+      writeJson(path.join(cwd, "package.json"), { name: "pi-extensions" });
       writeJson(path.join(cwd, packagePath), { keywords: ["pi-extension"] });
 
       expect(looksLikeVanillaPiExtension(cwd)).toBe(expected);
     });
+  });
+});
+
+test("looksLikeVanillaPiExtension does not scan arbitrary non-project directories", async () => {
+  await withTempDir(({ cwd }) => {
+    writeJson(path.join(cwd, "reference-repos/files/package.json"), { keywords: ["pi-extension"] });
+
+    expect(looksLikeVanillaPiExtension(cwd)).toBe(false);
+  });
+});
+
+test("looksLikeVanillaPiExtension scans git repos without a root package", async () => {
+  await withTempDir(({ cwd }) => {
+    initGitRepo(cwd);
+    writeJson(path.join(cwd, "extensions/files/package.json"), { keywords: ["pi-extension"] });
+
+    expect(looksLikeVanillaPiExtension(cwd)).toBe(true);
   });
 });
 
