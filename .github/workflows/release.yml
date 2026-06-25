@@ -29,7 +29,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -63,7 +63,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup
 
@@ -76,7 +76,7 @@ jobs:
         run: npm run publish-package -- --mode=release --version=${{ needs.create-release-pr.outputs.version }}
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ needs.create-release-pr.outputs.version }}
           name: pi-pack v${{ needs.create-release-pr.outputs.version }}
@@ -113,7 +113,7 @@ jobs:
 
     steps:
       - name: Checkout PR head
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
@@ -154,7 +154,7 @@ jobs:
           echo "tarball=overlay/npm-preview/$TARBALL" >> $GITHUB_OUTPUT
 
       - name: Upload preview package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.preview.outputs.artifact_name }}
           path: ${{ steps.pack.outputs.tarball }}
@@ -178,7 +178,7 @@ jobs:
           node-version: 24
 
       - name: Download preview package
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ${{ needs.build-pr-preview.outputs.artifact_name }}
           path: overlay/npm-preview
@@ -228,7 +228,7 @@ jobs:
           npm publish "$TARBALL" --access public --tag "$TAG" --ignore-scripts --registry https://registry.npmjs.org/
 
       - name: Post PR comment
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v3
         with:
           number: ${{ needs.build-pr-preview.outputs.pr_number }}
           header: pr-build
